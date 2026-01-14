@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-stone-50 text-stone-900;
+  }
+}
+
+/* Tiptap Editor Styles */
+.ProseMirror {
+  @apply min-h-[300px] p-4 focus:outline-none;
+}
+
+.ProseMirror > * + * {
+  @apply mt-3;
+}
+
+.ProseMirror h1 {
+  @apply text-3xl font-bold text-olive-800;
+}
+
+.ProseMirror h2 {
+  @apply text-2xl font-bold text-olive-700;
+}
+
+.ProseMirror h3 {
+  @apply text-xl font-bold text-olive-700;
+}
+
+.ProseMirror p {
+  @apply text-stone-700 leading-relaxed;
+}
+
+.ProseMirror ul {
+  @apply list-disc pl-6;
+}
+
+.ProseMirror ol {
+  @apply list-decimal pl-6;
+}
+
+.ProseMirror blockquote {
+  @apply border-l-4 border-olive-400 pl-4 italic text-stone-600;
+}
+
+.ProseMirror code {
+  @apply bg-stone-200 px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.ProseMirror a {
+  @apply text-olive-600 underline hover:text-olive-700;
+}
+
+.ProseMirror img {
+  @apply max-w-full h-auto rounded-lg my-4;
+}
+
+.ProseMirror iframe {
+  @apply w-full aspect-video rounded-lg my-4;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  @apply text-stone-400 float-left h-0 pointer-events-none;
+  content: attr(data-placeholder);
+}

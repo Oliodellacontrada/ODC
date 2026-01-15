@@ -38,8 +38,7 @@ export default function SettingsForm({ settings }: { settings: Settings | null }
         google_analytics_id: analyticsId || null,
       }
 
-      const { error } = await supabase
-        .from('site_settings')
+      const { error } = await (supabase.from('site_settings') as any)
         .update(updateData)
         .eq('id', settings?.id)
 

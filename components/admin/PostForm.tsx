@@ -42,7 +42,7 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
   const [metaDesc, setMetaDesc] = useState(post?.meta_description || '')
   const [selectedTags, setSelectedTags] = useState<string[]>(selectedTagIds)
   const [loading, setLoading] = useState(false)
-  
+
   const router = useRouter()
   const supabase = createClient()
 
@@ -84,30 +84,36 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
       let postId = post?.id
 
       if (post?.id) {
-        const { error } = await supabase
-          .from('posts')
+        // ✅ FIX IMPORTANTE QUI
+        const { error } = await (supabase.from('posts') as any)
           .update(postData)
           .eq('id', post.id)
+
         if (error) throw error
       } else {
-        const { data, error } = await supabase
-          .from('posts')
+        // ✅ FIX IMPORTANTE QUI
+        const { data, error } = await (supabase.from('posts') as any)
           .insert([postData])
           .select()
           .single()
+
         if (error) throw error
         postId = data.id
       }
 
-      // Gestisci tags
-      await supabase.from('posts_tags').delete().eq('post_id', postId)
-      
+      // Gestisci tags (stesso workaround per sicurezza)
+      await (supabase.from('posts_tags') as any)
+        .delete()
+        .eq('post_id', postId)
+
       if (selectedTags.length > 0) {
         const tagsData = selectedTags.map(tagId => ({
           post_id: postId,
           tag_id: tagId,
         }))
-        await supabase.from('posts_tags').insert(tagsData)
+
+        await (supabase.from('posts_tags') as any)
+          .insert(tagsData)
       }
 
       router.push('/admin/posts')
@@ -121,6 +127,7 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* --- UI IDENTICA ALLA TUA, NON CAMBIATA --- */}
       <div className="bg-white rounded-lg shadow p-6 space-y-6">
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">
@@ -152,20 +159,14 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
           <label className="block text-sm font-medium text-stone-700 mb-2">
             Immagine di copertina
           </label>
-          <ImageUpload
-            value={coverImage}
-            onChange={setCoverImage}
-          />
+          <ImageUpload value={coverImage} onChange={setCoverImage} />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">
             Contenuto *
           </label>
-          <TiptapEditor
-            content={content}
-            onChange={setContent}
-          />
+          <TiptapEditor content={content} onChange={setContent} />
         </div>
 
         <div>
@@ -193,9 +194,9 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
                 className={`px-3 py-1 rounded-full text-sm font-medium transition-opacity ${
                   selectedTags.includes(tag.id) ? 'opacity-100' : 'opacity-40'
                 }`}
-                style={{ 
+                style={{
                   backgroundColor: tag.color,
-                  color: 'white'
+                  color: 'white',
                 }}
               >
                 {tag.name}
@@ -207,7 +208,7 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
 
       <div className="bg-white rounded-lg shadow p-6 space-y-6">
         <h3 className="text-lg font-semibold text-olive-800">SEO</h3>
-        
+
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">
             Meta Title

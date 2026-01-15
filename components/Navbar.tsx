@@ -5,6 +5,11 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 
+type SiteSettings = {
+  logo_url: string | null
+  site_title: string | null
+}
+
 export default function Navbar() {
   const [logo, setLogo] = useState<string | null>(null)
   const [title, setTitle] = useState('Olio della Contrada')
@@ -18,8 +23,9 @@ export default function Navbar() {
         .single()
 
       if (data) {
-        setLogo(data.logo_url)
-        setTitle(data.site_title || 'Olio della Contrada')
+        const settings = data as SiteSettings
+        setLogo(settings.logo_url)
+        setTitle(settings.site_title || 'Olio della Contrada')
       }
     }
     loadSettings()

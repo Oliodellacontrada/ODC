@@ -6,6 +6,26 @@ type Props = {
   params: { id: string }
 }
 
+type Post = {
+  id: string
+  title: string
+  slug: string
+  content: string
+  excerpt: string
+  cover_image_url: string | null
+  status: string
+  meta_title: string
+  meta_description: string
+  posts_tags?: Array<{ tag_id: string }>
+}
+
+type Tag = {
+  id: string
+  name: string
+  slug: string
+  color: string
+}
+
 export default async function EditPostPage({ params }: Props) {
   const supabase = createServerClient()
   
@@ -15,7 +35,7 @@ export default async function EditPostPage({ params }: Props) {
     redirect('/admin/login')
   }
 
-  const { data: post } = await supabase
+  const { data: postData } = await supabase
     .from('posts')
     .select(`
       *,
@@ -24,14 +44,17 @@ export default async function EditPostPage({ params }: Props) {
     .eq('id', params.id)
     .single()
 
-  if (!post) notFound()
+  if (!postData) notFound()
 
-  const { data: tags } = await supabase
+  const post = postData as Post
+
+  const { data: tagsData } = await supabase
     .from('tags')
     .select('*')
     .order('name')
 
-  const selectedTagIds = post.posts_tags?.map((pt: any) => pt.tag_id) || []
+  const tags = (tagsData || []) as Tag[]
+  const selectedTagIds = post.posts_tags?.map((pt) => pt.tag_id) || []
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -41,7 +64,7 @@ export default async function EditPostPage({ params }: Props) {
 
       <PostForm 
         post={post} 
-        tags={tags || []}
+        tags={tags}
         selectedTagIds={selectedTagIds}
       />
     </div>

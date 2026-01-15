@@ -3,6 +3,13 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Edit2 } from 'lucide-react'
 
+type Page = {
+  id: string
+  title: string
+  slug: string
+  content: string
+}
+
 export default async function AdminPagesPage() {
   const supabase = createServerClient()
   
@@ -12,10 +19,12 @@ export default async function AdminPagesPage() {
     redirect('/admin/login')
   }
 
-  const { data: pages } = await supabase
+  const { data } = await supabase
     .from('pages')
     .select('*')
     .order('title')
+
+  const pages = (data || []) as Page[]
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -24,7 +33,7 @@ export default async function AdminPagesPage() {
       </h1>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        {pages?.map((page) => (
+        {pages.map((page) => (
           <div
             key={page.id}
             className="p-6 border-b border-stone-200 last:border-b-0 flex items-center justify-between"

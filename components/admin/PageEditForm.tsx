@@ -20,9 +20,10 @@ export default function PageEditForm({ page }: { page: Page }) {
     setLoading(true)
 
     try {
+      // @ts-ignore
       const { error } = await supabase
         .from('pages')
-        .update({ title, content } as any)
+        .update({ title, content })
         .eq('id', page.id)
 
       if (error) throw error

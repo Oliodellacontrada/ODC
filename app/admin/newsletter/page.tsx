@@ -2,6 +2,14 @@ import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import NewsletterList from '@/components/admin/NewsletterList'
 
+type Subscriber = {
+  id: string
+  email: string
+  subscribed: boolean
+  subscribed_at: string
+  unsubscribed_at: string | null
+}
+
 export default async function AdminNewsletterPage() {
   const supabase = createServerClient()
   
@@ -16,8 +24,9 @@ export default async function AdminNewsletterPage() {
     .select('*')
     .order('subscribed_at', { ascending: false })
 
-  const activeSubscribers = subscribers?.filter(s => s.subscribed) || []
-  const unsubscribed = subscribers?.filter(s => !s.subscribed) || []
+  const typedSubscribers = (subscribers || []) as Subscriber[]
+  const activeSubscribers = typedSubscribers.filter(s => s.subscribed)
+  const unsubscribed = typedSubscribers.filter(s => !s.subscribed)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -41,12 +50,12 @@ export default async function AdminNewsletterPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-stone-600 mb-2">Totale</p>
           <p className="text-3xl font-bold text-stone-700">
-            {subscribers?.length || 0}
+            {typedSubscribers.length}
           </p>
         </div>
       </div>
 
-      <NewsletterList subscribers={subscribers || []} />
+      <NewsletterList subscribers={typedSubscribers} />
     </div>
   )
 }

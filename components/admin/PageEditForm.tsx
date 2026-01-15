@@ -29,7 +29,7 @@ export default function PageEditForm({ page }: { page: Page }) {
         .update({
           title,
           content,
-        } as Partial<Page>) // ✅ FIX CHE FUNZIONA SEMPRE
+        } as any)   // 🔥 FIX DEFINITIVO PER VERCEL
         .eq('id', page.id)
 
       if (error) throw error

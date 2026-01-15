@@ -25,8 +25,11 @@ export default function PageEditForm({ page }: { page: Page }) {
 
     try {
       const { error } = await supabase
-        .from<Page>('pages') // ✅ FIX IMPORTANTE QUI
-        .update({ title, content })
+        .from('pages')
+        .update({
+          title,
+          content,
+        } as Partial<Page>) // ✅ FIX CHE FUNZIONA SEMPRE
         .eq('id', page.id)
 
       if (error) throw error

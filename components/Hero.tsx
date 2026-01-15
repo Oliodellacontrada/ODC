@@ -4,6 +4,12 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 
+type SiteSettings = {
+  hero_image_url: string | null
+  site_title: string | null
+  site_description: string | null
+}
+
 export default function Hero() {
   const [heroImage, setHeroImage] = useState<string | null>(null)
   const [title, setTitle] = useState('Olio della Contrada')
@@ -18,9 +24,10 @@ export default function Hero() {
         .single()
 
       if (data) {
-        setHeroImage(data.hero_image_url)
-        setTitle(data.site_title || 'Olio della Contrada')
-        setDescription(data.site_description || '')
+        const settings = data as SiteSettings
+        setHeroImage(settings.hero_image_url)
+        setTitle(settings.site_title || 'Olio della Contrada')
+        setDescription(settings.site_description || '')
       }
     }
     loadSettings()

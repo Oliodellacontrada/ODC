@@ -6,6 +6,15 @@ type Props = {
   params: { id: string }
 }
 
+type Page = {
+  id: string
+  title: string
+  slug: string
+  content: string
+  created_at: string
+  updated_at: string
+}
+
 export default async function EditPagePage({ params }: Props) {
   const supabase = createServerClient()
   
@@ -15,13 +24,15 @@ export default async function EditPagePage({ params }: Props) {
     redirect('/admin/login')
   }
 
-  const { data: page } = await supabase
+  const { data } = await supabase
     .from('pages')
     .select('*')
     .eq('id', params.id)
     .single()
 
-  if (!page) notFound()
+  if (!data) notFound()
+
+  const page = data as Page
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

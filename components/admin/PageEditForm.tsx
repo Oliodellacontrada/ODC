@@ -4,9 +4,13 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import TiptapEditor from './TiptapEditor'
-import { Database } from '@/types/database'
 
-type Page = Database['public']['Tables']['pages']['Row']
+type Page = {
+  id: string
+  title: string
+  slug: string
+  content: string
+}
 
 export default function PageEditForm({ page }: { page: Page }) {
   const [title, setTitle] = useState(page.title)
@@ -20,7 +24,6 @@ export default function PageEditForm({ page }: { page: Page }) {
     setLoading(true)
 
     try {
-      // @ts-ignore
       const { error } = await supabase
         .from('pages')
         .update({ title, content })

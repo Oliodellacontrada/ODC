@@ -8,16 +8,31 @@ type Props = {
   params: { slug: string }
 }
 
+type Post = {
+  id: string
+  title: string
+  slug: string
+  content: string
+  cover_image_url: string | null
+  published_at: string | null
+  created_at: string
+  meta_title: string | null
+  meta_description: string | null
+  posts_tags?: Array<{ tags: { id: string; name: string; slug: string; color: string } }>
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = createServerClient()
-  const { data: post } = await supabase
+  const { data } = await supabase
     .from('posts')
     .select('title, meta_title, meta_description, cover_image_url')
     .eq('slug', params.slug)
     .eq('status', 'published')
     .single()
 
-  if (!post) return {}
+  if (!data) return {}
+
+  const post = data as Post
 
   return {
     title: post.meta_title || post.title,
@@ -33,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PostPage({ params }: Props) {
   const supabase = createServerClient()
 
-  const { data: post } = await supabase
+  const { data } = await supabase
     .from('posts')
     .select(`
       *,
@@ -43,9 +58,10 @@ export default async function PostPage({ params }: Props) {
     .eq('status', 'published')
     .single()
 
-  if (!post) notFound()
+  if (!data) notFound()
 
-  const tags = post.posts_tags?.map((pt: any) => pt.tags) || []
+  const post = data as Post
+  const tags = post.posts_tags?.map((pt) => pt.tags) || []
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -62,7 +78,7 @@ export default async function PostPage({ params }: Props) {
       )}
 
       <div className="flex flex-wrap gap-2 mb-4">
-        {tags.map((tag: any) => (
+        {tags.map((tag) => (
           <span
             key={tag.id}
             className="px-3 py-1 rounded-full text-sm font-medium text-white"

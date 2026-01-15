@@ -4,10 +4,21 @@ import PostCard from '@/components/PostCard'
 
 export const revalidate = 60
 
+type Post = {
+  id: string
+  title: string
+  slug: string
+  excerpt: string | null
+  cover_image_url: string | null
+  published_at: string | null
+  created_at: string
+  posts_tags?: Array<{ tags: { id: string; name: string; slug: string; color: string } }>
+}
+
 export default async function HomePage() {
   const supabase = createServerClient()
 
-  const { data: posts } = await supabase
+  const { data } = await supabase
     .from('posts')
     .select(`
       *,
@@ -15,6 +26,8 @@ export default async function HomePage() {
     `)
     .eq('status', 'published')
     .order('published_at', { ascending: false })
+
+  const posts = (data || []) as Post[]
 
   return (
     <>
@@ -25,7 +38,7 @@ export default async function HomePage() {
           Ultimi Articoli
         </h2>
 
-        {!posts || posts.length === 0 ? (
+        {posts.length === 0 ? (
           <p className="text-stone-600 text-center py-12">
             Nessun articolo pubblicato
           </p>

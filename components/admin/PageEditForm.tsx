@@ -24,12 +24,11 @@ export default function PageEditForm({ page }: { page: Page }) {
     setLoading(true)
 
     try {
-      const { error } = await supabase
-        .from('pages')
+      const { error } = await (supabase.from('pages') as any)
         .update({
           title,
           content,
-        } as any)   // 🔥 FIX DEFINITIVO PER VERCEL
+        })
         .eq('id', page.id)
 
       if (error) throw error

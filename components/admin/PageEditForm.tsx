@@ -25,7 +25,7 @@ export default function PageEditForm({ page }: { page: Page }) {
 
     try {
       const { error } = await supabase
-        .from('pages')
+        .from<Page>('pages') // ✅ FIX IMPORTANTE QUI
         .update({ title, content })
         .eq('id', page.id)
 
@@ -72,6 +72,7 @@ export default function PageEditForm({ page }: { page: Page }) {
         >
           Annulla
         </button>
+
         <button
           type="submit"
           disabled={loading}

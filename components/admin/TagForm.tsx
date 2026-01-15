@@ -19,8 +19,7 @@ export default function TagForm() {
     try {
       const slug = generateSlug(name)
 
-      const { error } = await supabase
-        .from('tags')
+      const { error } = await (supabase.from('tags') as any)
         .insert([{ name, slug, color }])
 
       if (error) throw error

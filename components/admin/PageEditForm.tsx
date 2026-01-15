@@ -20,9 +20,14 @@ export default function PageEditForm({ page }: { page: Page }) {
     setLoading(true)
 
     try {
+      const updateData: Database['public']['Tables']['pages']['Update'] = {
+        title,
+        content,
+      }
+
       const { error } = await supabase
         .from('pages')
-        .update({ title, content })
+        .update(updateData)
         .eq('id', page.id)
 
       if (error) throw error

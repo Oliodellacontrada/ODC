@@ -4,13 +4,9 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import TiptapEditor from './TiptapEditor'
+import { Database } from '@/types/database'
 
-type Page = {
-  id: string
-  title: string
-  slug: string
-  content: string
-}
+type Page = Database['public']['Tables']['pages']['Row']
 
 export default function PageEditForm({ page }: { page: Page }) {
   const [title, setTitle] = useState(page.title)

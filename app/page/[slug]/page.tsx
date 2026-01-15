@@ -5,16 +5,25 @@ type Props = {
   params: { slug: string }
 }
 
+type Page = {
+  id: string
+  title: string
+  slug: string
+  content: string
+}
+
 export default async function PageSlug({ params }: Props) {
   const supabase = createServerClient()
 
-  const { data: page } = await supabase
+  const { data } = await supabase
     .from('pages')
     .select('*')
     .eq('slug', params.slug)
     .single()
 
-  if (!page) notFound()
+  if (!data) notFound()
+
+  const page = data as Page
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

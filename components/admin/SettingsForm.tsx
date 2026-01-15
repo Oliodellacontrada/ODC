@@ -30,7 +30,7 @@ export default function SettingsForm({ settings }: { settings: Settings | null }
     setLoading(true)
 
     try {
-      const data = {
+      const updateData = {
         logo_url: logo || null,
         hero_image_url: heroImage || null,
         site_title: title,
@@ -40,7 +40,7 @@ export default function SettingsForm({ settings }: { settings: Settings | null }
 
       const { error } = await supabase
         .from('site_settings')
-        .update(data)
+        .update(updateData)
         .eq('id', settings?.id)
 
       if (error) throw error

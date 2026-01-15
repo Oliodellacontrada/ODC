@@ -25,7 +25,7 @@ export default function TagsList({ tags }: { tags: Tag[] }) {
 
     setDeleting(id)
     try {
-      const { error } = await supabase.from('tags').delete().eq('id', id)
+      const { error } = await (supabase.from('tags') as any).delete().eq('id', id)
       if (error) throw error
       router.refresh()
     } catch (error) {
@@ -49,13 +49,12 @@ export default function TagsList({ tags }: { tags: Tag[] }) {
 
   async function saveEdit(id: string) {
     try {
-      const { error } = await supabase
-        .from('tags')
+      const { error } = await (supabase.from('tags') as any)
         .update({ name: editName, color: editColor })
         .eq('id', id)
 
       if (error) throw error
-      
+
       setEditing(null)
       router.refresh()
     } catch (error) {

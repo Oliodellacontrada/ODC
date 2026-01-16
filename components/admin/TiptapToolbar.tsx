@@ -71,6 +71,19 @@ export default function TiptapToolbar({ editor }: Props) {
     }
   }
 
+  function setImageSize(size: 'small' | 'medium' | 'large' | 'full') {
+    const sizes = {
+      small: '33%',
+      medium: '50%',
+      large: '75%',
+      full: '100%'
+    }
+    
+    editor.chain().focus().updateAttributes('image', { 
+      style: `width: ${sizes[size]}; height: auto;` 
+    }).run()
+  }
+
   const Button = ({ 
     onClick, 
     active, 

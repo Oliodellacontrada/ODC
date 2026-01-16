@@ -62,7 +62,7 @@ export default function Hero() {
           {/* Badge superiore */}
           <div className="inline-block mb-6 px-6 py-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg border-2 border-olive-300">
             <span className="text-olive-700 font-semibold text-sm tracking-wide">
-              🫒 Olio Extravergine di Tradizione
+              Olio Extravergine di Tradizione
             </span>
           </div>
 

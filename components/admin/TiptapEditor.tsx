@@ -17,7 +17,12 @@ export default function TiptapEditor({ content, onChange }: Props) {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image,
+      Image.configure({
+        HTMLAttributes: {
+          class: 'rounded-lg',
+        },
+        allowBase64: true,
+      }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {

@@ -73,14 +73,14 @@ export default function TiptapToolbar({ editor }: Props) {
 
   function setImageSize(size: 'small' | 'medium' | 'large' | 'full') {
     const sizes = {
-      small: '33%',
-      medium: '50%',
-      large: '75%',
+      small: '300',
+      medium: '500',
+      large: '700',
       full: '100%'
     }
     
     editor.chain().focus().updateAttributes('image', { 
-      style: `width: ${sizes[size]}; height: auto;` 
+      width: sizes[size]
     }).run()
   }
 
@@ -177,6 +177,38 @@ export default function TiptapToolbar({ editor }: Props) {
       </Button>
 
       <div className="w-px h-8 bg-stone-300 mx-1" />
+
+      {/* Ridimensiona immagine - mostrato solo se immagine selezionata */}
+      {editor.isActive('image') && (
+        <>
+          <Button 
+            onClick={() => setImageSize('small')}
+            title="Immagine piccola (33%)"
+          >
+            <span className="text-xs font-bold">S</span>
+          </Button>
+          <Button 
+            onClick={() => setImageSize('medium')}
+            title="Immagine media (50%)"
+          >
+            <span className="text-xs font-bold">M</span>
+          </Button>
+          <Button 
+            onClick={() => setImageSize('large')}
+            title="Immagine grande (75%)"
+          >
+            <span className="text-xs font-bold">L</span>
+          </Button>
+          <Button 
+            onClick={() => setImageSize('full')}
+            title="Immagine piena (100%)"
+          >
+            <span className="text-xs font-bold">XL</span>
+          </Button>
+          
+          <div className="w-px h-8 bg-stone-300 mx-1" />
+        </>
+      )}
 
       <Button onClick={() => editor.chain().focus().undo().run()}>
         <Undo className="w-5 h-5" />

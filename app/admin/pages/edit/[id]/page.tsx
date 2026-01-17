@@ -1,6 +1,6 @@
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect, notFound } from 'next/navigation'
-import PageEditForm from '@/components/admin/PageEditForm'
+import PageForm from '@/components/admin/PageForm'
 
 type Props = {
   params: { id: string }
@@ -40,7 +40,7 @@ export default async function EditPagePage({ params }: Props) {
         Modifica: {page.title}
       </h1>
 
-      <PageEditForm page={page} />
+      <PageForm page={page} />
     </div>
   )
 }

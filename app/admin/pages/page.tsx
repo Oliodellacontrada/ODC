@@ -28,9 +28,20 @@ export default async function AdminPagesPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold text-olive-800 mb-8">
-        Gestione Pagine
-      </h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-olive-800">
+          Gestione Pagine
+        </h1>
+        <Link
+          href="/admin/pages/new"
+          className="flex items-center gap-2 px-4 py-2 bg-olive-600 text-white rounded-lg hover:bg-olive-700 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Nuova Pagina
+        </Link>
+      </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {pages.map((page) => (

@@ -27,29 +27,6 @@ export default function TiptapToolbar({ editor }: Props) {
   const supabase = createClient()
 
   async function addImage() {
-    // Chiedi prima la dimensione
-    const size = window.prompt(
-      'Scegli la dimensione dell\'immagine:\n\n' +
-      '1 = Piccola (300px)\n' +
-      '2 = Media (500px)\n' +
-      '3 = Grande (700px)\n' +
-      '4 = Piena (100%)\n\n' +
-      'Inserisci il numero (1-4):'
-    )
-    
-    if (!size || !['1', '2', '3', '4'].includes(size)) {
-      return // Annullato o valore non valido
-    }
-    
-    const sizeMap: { [key: string]: string } = {
-      '1': '300px',
-      '2': '500px', 
-      '3': '700px',
-      '4': '100%'
-    }
-    
-    const selectedSize = sizeMap[size]
-    
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
@@ -70,10 +47,7 @@ export default function TiptapToolbar({ editor }: Props) {
           .from('media')
           .getPublicUrl(fileName)
 
-        editor.chain().focus().setImage({ 
-          src: publicUrl,
-          width: selectedSize 
-        } as any).run()
+        editor.chain().focus().setImage({ src: publicUrl }).run()
       } catch (error) {
         alert('Errore durante l\'upload dell\'immagine')
       } finally {

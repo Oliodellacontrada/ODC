@@ -73,15 +73,33 @@ export default function TiptapToolbar({ editor }: Props) {
 
   function setImageSize(size: 'small' | 'medium' | 'large' | 'full') {
     const sizes = {
-      small: '300',
-      medium: '500',
-      large: '700',
+      small: '300px',
+      medium: '500px',
+      large: '700px',
       full: '100%'
     }
     
-    editor.chain().focus().updateAttributes('image', { 
-      width: sizes[size]
-    }).run()
+    // Trova tutte le immagini nell'editor
+    const { state } = editor
+    const { from, to } = state.selection
+    
+    // Cerca un'immagine nella selezione corrente o vicino al cursore
+    let imagePos = -1
+    state.doc.nodesBetween(from - 1, to + 1, (node, pos) => {
+      if (node.type.name === 'image' && imagePos === -1) {
+        imagePos = pos
+        return false
+      }
+    })
+    
+    if (imagePos !== -1) {
+      editor.commands.setNodeSelection(imagePos)
+      editor.commands.updateAttributes('image', { 
+        width: sizes[size]
+      })
+    } else {
+      alert('Posiziona il cursore vicino a un\'immagine prima di ridimensionarla')
+    }
   }
 
   const Button = ({ 
@@ -178,25 +196,24 @@ export default function TiptapToolbar({ editor }: Props) {
 
       <div className="w-px h-8 bg-stone-300 mx-1" />
 
-      {/* Ridimensiona immagine - mostrato solo se immagine selezionata */}
-      {editor.isActive('image') && (
-        <>
-          <Button onClick={() => setImageSize('small')}>
-            <span className="text-xs font-bold">S</span>
-          </Button>
-          <Button onClick={() => setImageSize('medium')}>
-            <span className="text-xs font-bold">M</span>
-          </Button>
-          <Button onClick={() => setImageSize('large')}>
-            <span className="text-xs font-bold">L</span>
-          </Button>
-          <Button onClick={() => setImageSize('full')}>
-            <span className="text-xs font-bold">XL</span>
-          </Button>
-          
-          <div className="w-px h-8 bg-stone-300 mx-1" />
-        </>
-      )}
+      {/* Ridimensiona immagine - sempre visibile */}
+      <span className="text-xs text-stone-500 px-2">Immagine:</span>
+      <Button onClick={() => setImageSize('small')}>
+        <span className="text-xs font-bold">S</span>
+      </Button>
+      <Button onClick={() => setImageSize('medium')}>
+        <span className="text-xs font-bold">M</span>
+      </Button>
+      <Button onClick={() => setImageSize('large')}>
+        <span className="text-xs font-bold">L</span>
+      </Button>
+      <Button onClick={() => setImageSize('full')}>
+        <span className="text-xs font-bold">XL</span>
+      </Button>
+
+      <div className="w-px h-8 bg-stone-300 mx-1" />
+
+      <div className="w-px h-8 bg-stone-300 mx-1" />
 
       <Button onClick={() => editor.chain().focus().undo().run()}>
         <Undo className="w-5 h-5" />

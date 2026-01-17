@@ -80,19 +80,13 @@ export default function Hero() {
             </p>
           )}
 
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap gap-4 justify-center">
+          {/* CTA Button */}
+          <div className="flex justify-center">
             <a
               href="#articoli"
               className="px-8 py-4 bg-gradient-to-r from-olive-600 to-olive-700 text-white font-bold rounded-xl hover:from-olive-700 hover:to-olive-800 transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl"
             >
-              Scopri le Storie
-            </a>
-            <a
-              href="/page/chi-siamo"
-              className="px-8 py-4 bg-white/90 backdrop-blur-md text-olive-700 font-bold rounded-xl hover:bg-white transition-all transform hover:scale-105 shadow-lg border-2 border-olive-300"
-            >
-              Chi Siamo
+              Storie dalla Campagna
             </a>
           </div>
         </div>

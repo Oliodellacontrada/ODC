@@ -181,28 +181,16 @@ export default function TiptapToolbar({ editor }: Props) {
       {/* Ridimensiona immagine - mostrato solo se immagine selezionata */}
       {editor.isActive('image') && (
         <>
-          <Button 
-            onClick={() => setImageSize('small')}
-            title="Immagine piccola (33%)"
-          >
+          <Button onClick={() => setImageSize('small')}>
             <span className="text-xs font-bold">S</span>
           </Button>
-          <Button 
-            onClick={() => setImageSize('medium')}
-            title="Immagine media (50%)"
-          >
+          <Button onClick={() => setImageSize('medium')}>
             <span className="text-xs font-bold">M</span>
           </Button>
-          <Button 
-            onClick={() => setImageSize('large')}
-            title="Immagine grande (75%)"
-          >
+          <Button onClick={() => setImageSize('large')}>
             <span className="text-xs font-bold">L</span>
           </Button>
-          <Button 
-            onClick={() => setImageSize('full')}
-            title="Immagine piena (100%)"
-          >
+          <Button onClick={() => setImageSize('full')}>
             <span className="text-xs font-bold">XL</span>
           </Button>
           

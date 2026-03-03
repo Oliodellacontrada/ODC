@@ -180,6 +180,29 @@ export interface Database {
           updated_at?: string
         }
       }
+      gallery_items: {
+        Row: {
+          id: string
+          type: 'photo' | 'video'
+          url: string
+          title: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          type: 'photo' | 'video'
+          url: string
+          title?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          type?: 'photo' | 'video'
+          url?: string
+          title?: string | null
+          created_at?: string
+        }
+      }
     }
   }
 }

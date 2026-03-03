@@ -45,7 +45,6 @@ export default function Navbar() {
     <nav className="bg-gradient-to-r from-white via-olive-50 to-sage-50 border-b-2 border-olive-300 sticky top-0 z-50 shadow-md backdrop-blur-sm bg-white/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Logo e Titolo */}
           <Link href="/" className="flex items-center gap-4 group">
             {logo && (
               <div className="relative">
@@ -67,35 +66,33 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Menu Links + WhatsApp */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href
-              return (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className={`relative px-5 py-2 font-semibold transition-all rounded-lg group ${
-                    isActive
-                      ? 'text-white bg-gradient-to-r from-olive-600 to-olive-700 shadow-lg'
-                      : 'text-stone-700 hover:text-olive-700'
-                  }`}
-                >
-                  <span className="relative z-10">{link.label}</span>
-                  {!isActive && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-olive-100 to-sage-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  )}
-                  {!isActive && (
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-olive-400 to-honey-400 group-hover:w-3/4 transition-all duration-300"></div>
-                  )}
-                </Link>
-              )
-            })}
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href
+                return (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    className={`relative px-5 py-2 font-semibold transition-all rounded-lg group ${
+                      isActive
+                        ? 'text-white bg-gradient-to-r from-olive-600 to-olive-700 shadow-lg'
+                        : 'text-stone-700 hover:text-olive-700'
+                    }`}
+                  >
+                    <span className="relative z-10">{link.label}</span>
+                    {!isActive && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-olive-100 to-sage-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    )}
+                    {!isActive && (
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-olive-400 to-honey-400 group-hover:w-3/4 transition-all duration-300"></div>
+                    )}
+                  </Link>
+                )
+              })}
             </div>
 
-            {/* Pulsante WhatsApp */}
-            
+            <a
               href="https://wa.me/393474160611"
               target="_blank"
               rel="noopener noreferrer"
@@ -107,7 +104,6 @@ export default function Navbar() {
               </svg>
             </a>
 
-            {/* Link invisibile admin */}
             <Link
               href="/admin/login"
               className="w-3 h-3 rounded-full opacity-0"

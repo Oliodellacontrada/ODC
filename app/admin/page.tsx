@@ -1,7 +1,7 @@
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { FileText, Tags, Settings, Mail, FileEdit } from 'lucide-react'
+import { FileText, Tags, Settings, Mail, FileEdit, Image } from 'lucide-react'
 
 export default async function AdminPage() {
   const supabase = createServerClient()
@@ -42,6 +42,13 @@ export default async function AdminPage() {
       color: 'bg-olive-600',
     },
     {
+      title: 'Gallery',
+      description: 'Gestisci foto e video della gallery',
+      href: '/admin/gallery',
+      icon: Image,
+      color: 'bg-honey-600',
+    },
+    {
       title: 'Impostazioni',
       description: 'Logo, Hero e configurazione sito',
       href: '/admin/settings',
@@ -55,7 +62,6 @@ export default async function AdminPage() {
       <h1 className="text-4xl font-bold text-olive-800 mb-8">
         Dashboard Admin
       </h1>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card) => {
           const Icon = card.icon

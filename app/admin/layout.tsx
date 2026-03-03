@@ -1,7 +1,6 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import LogoutButton from '@/components/admin/LogoutButton'
 
 export default function AdminLayout({
   children,

@@ -3,14 +3,10 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Trash2, Image, Video, Plus } from 'lucide-react'
+import { Database } from '@/types/database'
 
-type GalleryItem = {
-  id: string
-  type: 'photo' | 'video'
-  url: string
-  title: string | null
-  created_at: string
-}
+type GalleryItem = Database['public']['Tables']['gallery_items']['Row']
+type GalleryInsert = Database['public']['Tables']['gallery_items']['Insert']
 
 export default function AdminGalleryPage() {
   const supabase = createClient()
@@ -39,11 +35,14 @@ export default function AdminGalleryPage() {
     if (!url.trim()) return
     setSaving(true)
     setMessage(null)
-    const { error } = await supabase.from('gallery_items').insert({
+
+    const newItem: GalleryInsert = {
       type: activeTab,
       url: url.trim(),
       title: title.trim() || null,
-    })
+    }
+
+    const { error } = await supabase.from('gallery_items').insert(newItem)
     setSaving(false)
     if (error) {
       setMessage({ text: 'Errore durante il salvataggio.', ok: false })

@@ -19,12 +19,12 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   const supabase = createServerClient()
-  const { data: settings } = await supabase
+  const { data } = await (supabase as any)
     .from('site_settings')
     .select('google_analytics_id')
     .single()
 
-  const analyticsId = settings?.google_analytics_id
+  const analyticsId = data?.google_analytics_id as string | null
 
   return (
     <html lang="it">

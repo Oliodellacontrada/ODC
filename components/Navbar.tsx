@@ -37,6 +37,7 @@ export default function Navbar() {
     { href: '/', label: 'Home' },
     { href: '/page/chi-siamo', label: 'Chi Siamo' },
     { href: '/', label: 'Blog' },
+    { href: '/gallery', label: 'Gallery' },
     { href: '/page/contatti', label: 'Contatti' },
   ]
 
@@ -73,7 +74,7 @@ export default function Navbar() {
               const isActive = pathname === link.href
               return (
                 <Link
-                  key={link.href}
+                  key={link.label}
                   href={link.href}
                   className={`relative px-5 py-2 font-semibold transition-all rounded-lg group ${
                     isActive

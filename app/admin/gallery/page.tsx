@@ -3,10 +3,14 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Trash2, Image, Video, Plus } from 'lucide-react'
-import { Database } from '@/types/database'
 
-type GalleryItem = Database['public']['Tables']['gallery_items']['Row']
-type GalleryInsert = Database['public']['Tables']['gallery_items']['Insert']
+type GalleryItem = {
+  id: string
+  type: 'photo' | 'video'
+  url: string
+  title: string | null
+  created_at: string
+}
 
 export default function AdminGalleryPage() {
   const supabase = createClient()
@@ -36,13 +40,14 @@ export default function AdminGalleryPage() {
     setSaving(true)
     setMessage(null)
 
-    const newItem: GalleryInsert = {
-      type: activeTab,
-      url: url.trim(),
-      title: title.trim() || null,
-    }
+    const { error } = await (supabase as any)
+      .from('gallery_items')
+      .insert({
+        type: activeTab,
+        url: url.trim(),
+        title: title.trim() || null,
+      })
 
-    const { error } = await supabase.from('gallery_items').insert(newItem)
     setSaving(false)
     if (error) {
       setMessage({ text: 'Errore durante il salvataggio.', ok: false })
@@ -56,7 +61,7 @@ export default function AdminGalleryPage() {
 
   async function handleDelete(id: string) {
     if (!confirm('Sei sicuro di voler eliminare questo elemento?')) return
-    await supabase.from('gallery_items').delete().eq('id', id)
+    await (supabase as any).from('gallery_items').delete().eq('id', id)
     loadItems()
   }
 

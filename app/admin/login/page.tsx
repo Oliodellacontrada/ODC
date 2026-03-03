@@ -1,6 +1,5 @@
 'use client'
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -12,19 +11,26 @@ export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  useEffect(() => {
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        router.push('/admin')
+      }
+    }
+    checkSession()
+  }, [])
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
-
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-
       if (error) throw error
-
       router.push('/admin')
       router.refresh()
     } catch (error: any) {
@@ -40,7 +46,6 @@ export default function LoginPage() {
         <h1 className="text-3xl font-bold text-olive-800 mb-6 text-center">
           Admin Login
         </h1>
-
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-stone-700 mb-2">
@@ -55,7 +60,6 @@ export default function LoginPage() {
               className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500"
             />
           </div>
-
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-stone-700 mb-2">
               Password
@@ -69,13 +73,11 @@ export default function LoginPage() {
               className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500"
             />
           </div>
-
           {error && (
             <div className="bg-red-50 text-red-800 p-3 rounded-lg text-sm">
               {error}
             </div>
           )}
-
           <button
             type="submit"
             disabled={loading}

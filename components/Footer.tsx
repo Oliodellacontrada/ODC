@@ -68,21 +68,21 @@ export default function Footer() {
                 className="text-stone-700 hover:text-olive-600 transition-all hover:translate-x-1 flex items-center gap-2 font-medium"
               >
                 <span className="w-2 h-2 bg-olive-400 rounded-full"></span>
-                Unsubscribe
+                Cancellati dalla Newsletter
               </Link>
-              
+
               <div className="border-t border-olive-200 pt-4 mt-2">
-                <a
-                  href="mailto:alnet.dev@proton.me"
+                
+                  href="mailto:oliodellacontrada@gmail.com"
                   className="flex items-center gap-3 text-stone-700 hover:text-olive-600 transition-all hover:translate-x-1 group"
                 >
                   <div className="p-2 bg-olive-200 rounded-lg group-hover:bg-olive-300 transition-colors">
                     <Mail className="w-5 h-5 text-olive-700" />
                   </div>
-                  <span className="font-medium">alnet.dev@proton.me</span>
+                  <span className="font-medium">oliodellacontrada@gmail.com</span>
                 </a>
 
-                <a
+                
                   href="https://ko-fi.com/alnet"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -133,11 +133,26 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Sezione Copyright */}
         <div className="border-t-2 border-olive-300 mt-12 pt-8 text-center">
           <p className="text-stone-700 font-medium">
             © {new Date().getFullYear()} <span className="text-olive-800 font-bold">Olio della Contrada</span> · Tutti i diritti riservati
           </p>
         </div>
+
+        {/* Sezione Sviluppatore */}
+        <div className="mt-6 text-center">
+          
+            href="mailto:alnet.dev@proton.me"
+            className="inline-flex items-center gap-2 text-stone-500 hover:text-olive-600 transition-all text-sm group"
+          >
+            <div className="p-1.5 bg-stone-200 rounded-md group-hover:bg-olive-200 transition-colors">
+              <Mail className="w-4 h-4 text-stone-500 group-hover:text-olive-600" />
+            </div>
+            <span>Contatta lo sviluppatore</span>
+          </a>
+        </div>
+
       </div>
     </footer>
   )

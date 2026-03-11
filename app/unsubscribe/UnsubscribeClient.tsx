@@ -1,9 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 
 export default function UnsubscribeClient() {
-  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -20,13 +18,13 @@ export default function UnsubscribeClient() {
       })
       const data = await res.json()
       if (res.ok) {
-        setMessage('Ti sei disiscritto con successo dalla newsletter.')
+        setMessage('Ti sei cancellato con successo dalla newsletter.')
         setEmail('')
       } else {
-        setMessage(data.error || 'Errore durante la disiscrizione')
+        setMessage(data.error || 'Errore durante la cancellazione')
       }
     } catch (error) {
-      setMessage('Errore durante la disiscrizione')
+      setMessage('Errore durante la cancellazione')
     } finally {
       setLoading(false)
     }
@@ -36,10 +34,10 @@ export default function UnsubscribeClient() {
     <div className="max-w-md mx-auto px-4 py-20">
       <div className="bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-2xl font-bold text-olive-800 mb-4">
-          Disiscrivi Newsletter
+          Cancellati dalla Newsletter
         </h1>
         <p className="text-stone-600 mb-6">
-          Inserisci la tua email per disiscriverti dalla newsletter.
+          Inserisci la tua email per cancellarti dalla newsletter.
         </p>
         <form onSubmit={handleUnsubscribe} className="space-y-4">
           <div>
@@ -61,7 +59,7 @@ export default function UnsubscribeClient() {
             disabled={loading}
             className="w-full px-6 py-3 bg-olive-600 text-white rounded-lg hover:bg-olive-700 transition-colors disabled:opacity-50"
           >
-            {loading ? 'Elaborazione...' : 'Disiscrivi'}
+            {loading ? 'Elaborazione...' : 'Cancellati'}
           </button>
         </form>
         {message && (

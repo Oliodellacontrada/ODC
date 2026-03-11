@@ -35,7 +35,6 @@ export default function Navbar() {
     loadSettings()
   }, [])
 
-  // Chiudi menu quando cambia pagina
   useEffect(() => {
     setMenuOpen(false)
   }, [pathname])
@@ -45,7 +44,7 @@ export default function Navbar() {
     { href: '/page/chi-siamo', label: 'Chi Siamo' },
     { href: '/', label: 'Blog' },
     { href: '/gallery', label: 'Gallery' },
-    { href: '/page/contatti', label: 'Contatti' },
+    { href: '/contatti', label: 'Contatti' },
   ]
 
   return (

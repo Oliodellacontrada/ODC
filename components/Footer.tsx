@@ -67,7 +67,7 @@ export default function Footer() {
                 </a>
                 <a href="https://ko-fi.com/alnet" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-stone-700 hover:text-olive-600 transition-all hover:translate-x-1 mt-4 group">
                   <div className="p-2 bg-gradient-to-br from-honey-200 to-honey-300 rounded-lg group-hover:from-honey-300 group-hover:to-honey-400 transition-all">
-                    <Heart className="w-5 h-5 text-honey-800 fill-honey-800" />
+                    <Heart style={{ color: "#FF2800", fill: "#FF2800" }} className="w-5 h-5" />
                   </div>
                   <span className="font-semibold">Sostieni il progetto</span>
                 </a>

@@ -45,4 +45,88 @@ export default function Footer() {
               </svg>
               Informazioni
             </h3>
-            <div cl
+            <div className="flex flex-col gap-4">
+              <Link href="/page/privacy" className="text-stone-700 hover:text-olive-600 transition-all hover:translate-x-1 flex items-center gap-2 font-medium">
+                <span className="w-2 h-2 bg-olive-400 rounded-full"></span>
+                Privacy Policy
+              </Link>
+              <Link href="/page/cookie" className="text-stone-700 hover:text-olive-600 transition-all hover:translate-x-1 flex items-center gap-2 font-medium">
+                <span className="w-2 h-2 bg-olive-400 rounded-full"></span>
+                Cookie Policy
+              </Link>
+              <Link href="/unsubscribe" className="text-stone-700 hover:text-olive-600 transition-all hover:translate-x-1 flex items-center gap-2 font-medium">
+                <span className="w-2 h-2 bg-olive-400 rounded-full"></span>
+                Cancellati dalla Newsletter
+              </Link>
+              <div className="border-t border-olive-200 pt-4 mt-2">
+                <a href="mailto:oliodellacontrada@gmail.com" className="flex items-center gap-3 text-stone-700 hover:text-olive-600 transition-all hover:translate-x-1 group">
+                  <div className="p-2 bg-olive-200 rounded-lg group-hover:bg-olive-300 transition-colors">
+                    <Mail className="w-5 h-5 text-olive-700" />
+                  </div>
+                  <span className="font-medium">oliodellacontrada@gmail.com</span>
+                </a>
+                <a href="https://ko-fi.com/alnet" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-stone-700 hover:text-olive-600 transition-all hover:translate-x-1 mt-4 group">
+                  <div className="p-2 bg-gradient-to-br from-honey-200 to-honey-300 rounded-lg group-hover:from-honey-300 group-hover:to-honey-400 transition-all">
+                    <Heart className="w-5 h-5 text-honey-800 fill-honey-800" />
+                  </div>
+                  <span className="font-semibold">Sostieni il progetto</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-olive-600 to-olive-700 rounded-2xl p-8 shadow-xl text-white">
+            <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Newsletter
+            </h3>
+            <p className="text-olive-100 mb-6 leading-relaxed">
+              Rimani aggiornato sulle novita dalla campagna, i nostri prodotti e le storie dell olio extravergine
+            </p>
+            <form onSubmit={handleSubscribe} className="space-y-3">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="La tua email"
+                required
+                className="w-full px-4 py-3 border-2 border-olive-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-honey-400 bg-white/95 text-stone-900 placeholder-stone-500"
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full px-6 py-3 bg-honey-500 text-olive-900 font-bold rounded-lg hover:bg-honey-400 transition-all transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-lg"
+              >
+                {loading ? 'Invio...' : 'Iscriviti ora'}
+              </button>
+            </form>
+            {message && (
+              <div className="mt-4 p-3 bg-white/20 backdrop-blur-sm rounded-lg text-sm font-medium">
+                {message}
+              </div>
+            )}
+          </div>
+
+        </div>
+
+        <div className="border-t-2 border-olive-300 mt-12 pt-8 text-center">
+          <p className="text-stone-700 font-medium">
+            {`\u00a9 ${new Date().getFullYear()}`} <span className="text-olive-800 font-bold">Olio della Contrada</span> &middot; Tutti i diritti riservati
+          </p>
+        </div>
+
+        <div className="mt-6 text-center">
+          <a href="mailto:alnet.dev@proton.me" className="inline-flex items-center gap-2 text-stone-500 hover:text-olive-600 transition-all text-sm group">
+            <div className="p-1.5 bg-stone-200 rounded-md group-hover:bg-olive-200 transition-colors">
+              <Mail className="w-4 h-4 text-stone-500 group-hover:text-olive-600" />
+            </div>
+            <span>Contatta lo sviluppatore</span>
+          </a>
+        </div>
+
+      </div>
+    </footer>
+  )
+}

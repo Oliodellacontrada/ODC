@@ -27,10 +27,10 @@ export default function Footer() {
         setMessage('Grazie per esserti iscritto!')
         setEmail('')
       } else {
-        setMessage(data.error || 'Errore durante l\'iscrizione')
+        setMessage(data.error || "Errore durante l'iscrizione")
       }
     } catch (error) {
-      setMessage('Errore durante l\'iscrizione')
+      setMessage("Errore durante l'iscrizione")
     } finally {
       setLoading(false)
     }

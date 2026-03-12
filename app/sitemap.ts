@@ -1,17 +1,25 @@
 import { MetadataRoute } from 'next'
 import { createServerClient } from '@/lib/supabase-server'
 
+type PostSlug = {
+  slug: string
+  updated_at: string
+  published_at: string
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = 'https://www.oliodellacontrada.it'
   const supabase = createServerClient()
 
-  const { data: posts } = await supabase
+  const { data } = await supabase
     .from('posts')
     .select('slug, updated_at, published_at')
     .eq('status', 'published')
     .order('published_at', { ascending: false })
 
-  const postUrls: MetadataRoute.Sitemap = (posts || []).map((post) => ({
+  const posts = (data || []) as PostSlug[]
+
+  const postUrls: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${siteUrl}/post/${post.slug}`,
     lastModified: new Date(post.updated_at || post.published_at),
     changeFrequency: 'monthly',

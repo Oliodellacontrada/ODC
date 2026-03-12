@@ -8,7 +8,7 @@ import { Send, Users, Mail } from 'lucide-react'
 type Subscriber = {
   id: string
   email: string
-  confirmed: boolean
+  subscribed: boolean
   created_at: string
 }
 
@@ -37,7 +37,7 @@ export default function AdminNewsletterPage() {
     load()
   }, [])
 
-  const confirmed = subscribers.filter((s) => s.confirmed)
+  const confirmed = subscribers.filter((s) => s.subscribed)
 
   async function handleSend() {
     if (!subject.trim() || !content.trim()) return
@@ -87,7 +87,7 @@ export default function AdminNewsletterPage() {
           </div>
           <div>
             <p className="text-2xl font-bold text-green-700">{confirmed.length}</p>
-            <p className="text-stone-500 text-sm">Confermati</p>
+            <p className="text-stone-500 text-sm">Attivi</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl shadow p-6 flex items-center gap-4 border border-olive-100">
@@ -96,7 +96,7 @@ export default function AdminNewsletterPage() {
           </div>
           <div>
             <p className="text-2xl font-bold text-amber-700">{subscribers.length - confirmed.length}</p>
-            <p className="text-stone-500 text-sm">In attesa di conferma</p>
+            <p className="text-stone-500 text-sm">Cancellati</p>
           </div>
         </div>
       </div>

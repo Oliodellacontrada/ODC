@@ -10,35 +10,26 @@ type GalleryItem = {
   url: string
   title: string | null
   created_at: string
+  position: number
 }
 
 function getVideoEmbedUrl(url: string): string {
-  // YouTube
   const ytRegExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/
   const ytMatch = url.match(ytRegExp)
   if (ytMatch && ytMatch[7].length === 11) {
     return `https://www.youtube.com/embed/${ytMatch[7]}`
   }
-
-  // Odysee - es: https://odysee.com/@canale/video-slug
   if (url.includes('odysee.com')) {
-    // Converte URL normale in embed
-    const odyseeEmbed = url.replace('odysee.com/', 'odysee.com/$/embed/')
-    return odyseeEmbed
+    return url.replace('odysee.com/', 'odysee.com/$/embed/')
   }
-
-  // PeerTube - es: https://peertube.esempio.com/videos/watch/UUID
   if (url.includes('/videos/watch/')) {
     return url.replace('/videos/watch/', '/videos/embed/')
   }
-
-  // PeerTube formato alternativo: /w/UUID
   if (url.match(/\/w\/[a-zA-Z0-9]+/)) {
     const peertubeBase = url.split('/w/')[0]
     const videoId = url.split('/w/')[1].split('?')[0]
     return `${peertubeBase}/videos/embed/${videoId}`
   }
-
   return url
 }
 
@@ -59,7 +50,7 @@ export default function GalleryPage() {
       const { data } = await supabase
         .from('gallery_items')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('position', { ascending: true })
       setItems((data as GalleryItem[]) || [])
     }
     load()
@@ -68,19 +59,12 @@ export default function GalleryPage() {
   const photos = items.filter((i) => i.type === 'photo')
   const videos = items.filter((i) => i.type === 'video')
 
-  function openLightbox(index: number) {
-    setLightboxIndex(index)
-  }
-
-  function closeLightbox() {
-    setLightboxIndex(null)
-  }
-
+  function openLightbox(index: number) { setLightboxIndex(index) }
+  function closeLightbox() { setLightboxIndex(null) }
   function prevPhoto() {
     if (lightboxIndex === null) return
     setLightboxIndex((lightboxIndex - 1 + photos.length) % photos.length)
   }
-
   function nextPhoto() {
     if (lightboxIndex === null) return
     setLightboxIndex((lightboxIndex + 1) % photos.length)
@@ -98,13 +82,11 @@ export default function GalleryPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-olive-800 mb-4">Gallery</h1>
         <div className="h-1 w-24 bg-gradient-to-r from-olive-400 to-honey-400 rounded-full mx-auto"></div>
       </div>
 
-      {/* Sezione Foto */}
       <section className="mb-16">
         <h2 className="text-2xl font-bold text-olive-700 mb-6 flex items-center gap-2">
           <span>📷</span> Foto
@@ -144,7 +126,6 @@ export default function GalleryPage() {
         )}
       </section>
 
-      {/* Sezione Video */}
       <section>
         <h2 className="text-2xl font-bold text-olive-700 mb-6 flex items-center gap-2">
           <span>🎬</span> Video
@@ -179,32 +160,20 @@ export default function GalleryPage() {
         )}
       </section>
 
-      {/* Lightbox */}
       {lightboxIndex !== null && photos[lightboxIndex] && (
         <div
           className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
           onClick={closeLightbox}
         >
-          <button
-            onClick={closeLightbox}
-            className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-          >
+          <button onClick={closeLightbox} className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors">
             <X className="w-6 h-6" />
           </button>
-
           {photos.length > 1 && (
-            <button
-              onClick={(e) => { e.stopPropagation(); prevPhoto() }}
-              className="absolute left-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-            >
+            <button onClick={(e) => { e.stopPropagation(); prevPhoto() }} className="absolute left-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors">
               <ChevronLeft className="w-8 h-8" />
             </button>
           )}
-
-          <div
-            className="max-w-5xl max-h-[85vh] flex flex-col items-center gap-3"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="max-w-5xl max-h-[85vh] flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
             <img
               src={photos[lightboxIndex].url}
               alt={photos[lightboxIndex].title || ''}
@@ -215,12 +184,8 @@ export default function GalleryPage() {
             )}
             <p className="text-white/50 text-xs">{lightboxIndex + 1} / {photos.length}</p>
           </div>
-
           {photos.length > 1 && (
-            <button
-              onClick={(e) => { e.stopPropagation(); nextPhoto() }}
-              className="absolute right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-            >
+            <button onClick={(e) => { e.stopPropagation(); nextPhoto() }} className="absolute right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors">
               <ChevronRight className="w-8 h-8" />
             </button>
           )}

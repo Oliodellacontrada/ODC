@@ -109,7 +109,7 @@ export default function AdminGalleryPage() {
     setItems([...otherItems, ...updated])
 
     for (const item of updated) {
-      await supabase.from('gallery_items').update({ position: item.position }).eq('id', item.id)
+      await (supabase as any).from('gallery_items').update({ position: item.position }).eq('id', item.id)
     }
 
     dragItem.current = null

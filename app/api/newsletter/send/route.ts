@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const { data: subscribers } = await supabase
     .from('newsletter_subscribers')
     .select('email')
-    .eq('confirmed', true)
+    .eq('subscribed', true)
 
   const emails = ((subscribers || []) as Subscriber[]).map((s) => s.email)
 

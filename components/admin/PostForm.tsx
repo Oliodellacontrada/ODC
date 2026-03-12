@@ -23,6 +23,8 @@ type Post = {
   status: string
   meta_title: string
   meta_description: string
+  type?: string
+  youtube_url?: string | null
 }
 
 type Props = {
@@ -31,12 +33,24 @@ type Props = {
   selectedTagIds?: string[]
 }
 
+function getYoutubeId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)
+  return match ? match[1] : null
+}
+
+function getYoutubeThumbnail(url: string): string | null {
+  const id = getYoutubeId(url)
+  return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : null
+}
+
 export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
+  const [type, setType] = useState(post?.type || 'articolo')
   const [title, setTitle] = useState(post?.title || '')
   const [slug, setSlug] = useState(post?.slug || '')
   const [content, setContent] = useState(post?.content || '')
   const [excerpt, setExcerpt] = useState(post?.excerpt || '')
   const [coverImage, setCoverImage] = useState(post?.cover_image_url || '')
+  const [youtubeUrl, setYoutubeUrl] = useState(post?.youtube_url || '')
   const [status, setStatus] = useState(post?.status || 'draft')
   const [metaTitle, setMetaTitle] = useState(post?.meta_title || '')
   const [metaDesc, setMetaDesc] = useState(post?.meta_description || '')
@@ -51,6 +65,12 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
     if (!post) {
       setSlug(generateSlug(value))
     }
+  }
+
+  function handleYoutubeUrl(url: string) {
+    setYoutubeUrl(url)
+    const thumbnail = getYoutubeThumbnail(url)
+    if (thumbnail) setCoverImage(thumbnail)
   }
 
   function toggleTag(tagId: string) {
@@ -75,6 +95,8 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
         excerpt,
         cover_image_url: coverImage || null,
         status,
+        type,
+        youtube_url: type === 'video' ? youtubeUrl : null,
         meta_title: metaTitle || title,
         meta_description: metaDesc || excerpt,
         author_id: user?.id,
@@ -84,36 +106,26 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
       let postId = post?.id
 
       if (post?.id) {
-        // ✅ FIX IMPORTANTE QUI
         const { error } = await (supabase.from('posts') as any)
           .update(postData)
           .eq('id', post.id)
-
         if (error) throw error
       } else {
-        // ✅ FIX IMPORTANTE QUI
         const { data, error } = await (supabase.from('posts') as any)
           .insert([postData])
           .select()
           .single()
-
         if (error) throw error
         postId = data.id
       }
 
-      // Gestisci tags (stesso workaround per sicurezza)
       await (supabase.from('posts_tags') as any)
         .delete()
         .eq('post_id', postId)
 
       if (selectedTags.length > 0) {
-        const tagsData = selectedTags.map(tagId => ({
-          post_id: postId,
-          tag_id: tagId,
-        }))
-
         await (supabase.from('posts_tags') as any)
-          .insert(tagsData)
+          .insert(selectedTags.map(tagId => ({ post_id: postId, tag_id: tagId })))
       }
 
       router.push('/admin/posts')
@@ -127,12 +139,41 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* --- UI IDENTICA ALLA TUA, NON CAMBIATA --- */}
       <div className="bg-white rounded-lg shadow p-6 space-y-6">
+
+        {/* Tipo */}
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">
-            Titolo *
+            Tipo di contenuto
           </label>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setType('articolo')}
+              className={`px-5 py-2 rounded-lg font-medium transition-all ${
+                type === 'articolo'
+                  ? 'bg-olive-600 text-white shadow'
+                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+              }`}
+            >
+              📝 Articolo
+            </button>
+            <button
+              type="button"
+              onClick={() => setType('video')}
+              className={`px-5 py-2 rounded-lg font-medium transition-all ${
+                type === 'video'
+                  ? 'bg-olive-600 text-white shadow'
+                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+              }`}
+            >
+              🎬 Video
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-2">Titolo *</label>
           <input
             type="text"
             value={title}
@@ -143,9 +184,7 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
-            Slug *
-          </label>
+          <label className="block text-sm font-medium text-stone-700 mb-2">Slug *</label>
           <input
             type="text"
             value={slug}
@@ -155,23 +194,60 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
           />
         </div>
 
+        {/* URL YouTube (solo per video) */}
+        {type === 'video' && (
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              URL YouTube *
+            </label>
+            <input
+              type="url"
+              value={youtubeUrl}
+              onChange={(e) => handleYoutubeUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500"
+            />
+            {getYoutubeId(youtubeUrl) && (
+              <p className="text-xs text-green-600 mt-1 font-medium">
+                ✓ Thumbnail estratta automaticamente come copertina
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Copertina */}
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">
-            Immagine di copertina
+            Immagine di copertina {type === 'video' && <span className="text-stone-400">(estratta da YouTube)</span>}
           </label>
-          <ImageUpload value={coverImage} onChange={setCoverImage} />
+          {type === 'video' && coverImage ? (
+            <div className="relative">
+              <img src={coverImage} alt="Thumbnail" className="w-full max-w-sm rounded-xl shadow" />
+              <button
+                type="button"
+                onClick={() => setCoverImage('')}
+                className="mt-2 text-xs text-red-500 hover:text-red-700"
+              >
+                Rimuovi
+              </button>
+            </div>
+          ) : (
+            <ImageUpload value={coverImage} onChange={setCoverImage} />
+          )}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
-            Contenuto *
-          </label>
-          <TiptapEditor content={content} onChange={setContent} />
-        </div>
+        {/* Contenuto (solo per articoli) */}
+        {type === 'articolo' && (
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">Contenuto *</label>
+            <TiptapEditor content={content} onChange={setContent} />
+          </div>
+        )}
 
+        {/* Descrizione (per entrambi) */}
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">
-            Estratto
+            {type === 'video' ? 'Descrizione del video' : 'Estratto'}
           </label>
           <textarea
             value={excerpt}
@@ -182,9 +258,7 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
-            Tags
-          </label>
+          <label className="block text-sm font-medium text-stone-700 mb-2">Tags</label>
           <div className="flex flex-wrap gap-2">
             {tags.map((tag) => (
               <button
@@ -194,10 +268,7 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
                 className={`px-3 py-1 rounded-full text-sm font-medium transition-opacity ${
                   selectedTags.includes(tag.id) ? 'opacity-100' : 'opacity-40'
                 }`}
-                style={{
-                  backgroundColor: tag.color,
-                  color: 'white',
-                }}
+                style={{ backgroundColor: tag.color, color: 'white' }}
               >
                 {tag.name}
               </button>
@@ -208,11 +279,8 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
 
       <div className="bg-white rounded-lg shadow p-6 space-y-6">
         <h3 className="text-lg font-semibold text-olive-800">SEO</h3>
-
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
-            Meta Title
-          </label>
+          <label className="block text-sm font-medium text-stone-700 mb-2">Meta Title</label>
           <input
             type="text"
             value={metaTitle}
@@ -220,11 +288,8 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
             className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500"
           />
         </div>
-
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
-            Meta Description
-          </label>
+          <label className="block text-sm font-medium text-stone-700 mb-2">Meta Description</label>
           <textarea
             value={metaDesc}
             onChange={(e) => setMetaDesc(e.target.value)}
@@ -243,7 +308,6 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
           <option value="draft">Bozza</option>
           <option value="published">Pubblicato</option>
         </select>
-
         <div className="flex gap-4">
           <button
             type="button"

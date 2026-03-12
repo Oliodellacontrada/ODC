@@ -22,6 +22,7 @@ type Post = {
   meta_description: string | null
   type: string | null
   youtube_url: string | null
+  excerpt: string | null
   posts_tags?: Array<{ tags: { id: string; name: string; slug: string; color: string } }>
 }
 

@@ -60,7 +60,7 @@ export default async function PostPage({ params }: Props) {
   const tags = post.posts_tags?.map((pt) => pt.tags) || []
 
   const wordCount = post.content.replace(/<[^>]*>/g, '').split(/\s+/).length
-  const readingMinutes = Math.max(1, Math.round(wordCount / 200))
+  const readingMinutes = Math.max(1, Math.round(wordCount / 150))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-50 via-olive-50/30 to-sage-50/30">

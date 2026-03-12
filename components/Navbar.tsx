@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { usePathname } from 'next/navigation'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Phone } from 'lucide-react'
 
 type SiteSettings = {
   logo_url: string | null
@@ -25,7 +25,6 @@ export default function Navbar() {
         .from('site_settings')
         .select('logo_url, site_title')
         .single()
-
       if (data) {
         const settings = data as SiteSettings
         setLogo(settings.logo_url)
@@ -101,6 +100,15 @@ export default function Navbar() {
               })}
             </div>
 
+            {/* Telefono */}
+            <a
+              href="tel:3474160611"
+              className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-110 shadow-lg"
+              title="Chiamaci"
+            >
+              <Phone className="w-6 h-6" />
+            </a>
+
             {/* WhatsApp */}
             <a
               href="https://wa.me/393474160611"
@@ -123,8 +131,15 @@ export default function Navbar() {
             />
           </div>
 
-          {/* Mobile: WhatsApp + Hamburger */}
+          {/* Mobile: Telefono + WhatsApp + Hamburger */}
           <div className="flex md:hidden items-center gap-3">
+            <a
+              href="tel:3474160611"
+              className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full shadow-lg"
+              title="Chiamaci"
+            >
+              <Phone className="w-5 h-5" />
+            </a>
             <a
               href="https://wa.me/393474160611"
               target="_blank"
@@ -170,4 +185,4 @@ export default function Navbar() {
       )}
     </nav>
   )
-}     
+}

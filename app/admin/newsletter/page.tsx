@@ -28,20 +28,23 @@ export default function AdminNewsletterPage() {
         router.push('/admin/login')
         return
       }
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('newsletter_subscribers')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('subscribed_at', { ascending: false })
+      
+      if (error) console.error('Errore caricamento iscritti:', error)
       setSubscribers((data || []) as Subscriber[])
     }
     load()
   }, [])
 
-  const confirmed = subscribers.filter((s) => s.subscribed)
+  const active = subscribers.filter((s) => s.subscribed === true)
+  const cancelled = subscribers.filter((s) => s.subscribed === false)
 
   async function handleSend() {
     if (!subject.trim() || !content.trim()) return
-    if (!confirm(`Stai per inviare la newsletter a ${confirmed.length} iscritti. Confermi?`)) return
+    if (!confirm(`Stai per inviare la newsletter a ${active.length} iscritti. Confermi?`)) return
 
     setSending(true)
     setMessage(null)
@@ -86,7 +89,7 @@ export default function AdminNewsletterPage() {
             <Mail className="w-6 h-6 text-green-700" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-green-700">{confirmed.length}</p>
+            <p className="text-2xl font-bold text-green-700">{active.length}</p>
             <p className="text-stone-500 text-sm">Attivi</p>
           </div>
         </div>
@@ -95,7 +98,7 @@ export default function AdminNewsletterPage() {
             <Send className="w-6 h-6 text-amber-700" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-amber-700">{subscribers.length - confirmed.length}</p>
+            <p className="text-2xl font-bold text-amber-700">{cancelled.length}</p>
             <p className="text-stone-500 text-sm">Cancellati</p>
           </div>
         </div>
@@ -143,11 +146,11 @@ export default function AdminNewsletterPage() {
 
           <button
             onClick={handleSend}
-            disabled={sending || !subject.trim() || !content.trim() || confirmed.length === 0}
+            disabled={sending || !subject.trim() || !content.trim() || active.length === 0}
             className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-olive-600 to-olive-700 text-white font-bold rounded-xl hover:from-olive-700 hover:to-olive-800 transition-all disabled:opacity-50 shadow-lg"
           >
             <Send className="w-5 h-5" />
-            {sending ? 'Invio in corso...' : `Invia a ${confirmed.length} iscritti`}
+            {sending ? 'Invio in corso...' : `Invia a ${active.length} iscritti`}
           </button>
         </div>
       </div>

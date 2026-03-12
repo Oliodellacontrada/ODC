@@ -8,9 +8,53 @@ import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
 
+const siteUrl = 'https://www.oliodellacontrada.it'
+const ogImage = 'https://res.cloudinary.com/dg1x0q7te/image/upload/v1773327006/0MGrsFMZTQSL17ohWQpJ3w-removebg-preview_hygpgc.png'
+
 export const metadata: Metadata = {
-  title: 'Olio della Contrada',
-  description: 'Blog e notizie dalla nostra azienda agricola',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'Olio della Contrada',
+    template: '%s | Olio della Contrada',
+  },
+  description: 'Produttori artigianali di olio EVO biologico a Cleto, Cosenza',
+  keywords: ['olio extravergine', 'olio biologico', 'Carolea', 'Calabria', 'Cleto', 'Cosenza', 'olio EVO', 'monocultivar'],
+  authors: [{ name: 'Olio della Contrada' }],
+  creator: 'Olio della Contrada',
+  publisher: 'Olio della Contrada',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'it_IT',
+    url: siteUrl,
+    siteName: 'Olio della Contrada',
+    title: 'Olio della Contrada',
+    description: 'Produttori artigianali di olio EVO biologico a Cleto, Cosenza',
+    images: [
+      {
+        url: ogImage,
+        width: 800,
+        height: 800,
+        alt: 'Olio della Contrada - Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Olio della Contrada',
+    description: 'Produttori artigianali di olio EVO biologico a Cleto, Cosenza',
+    images: [ogImage],
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
 }
 
 export default async function RootLayout({
@@ -23,7 +67,6 @@ export default async function RootLayout({
     .from('site_settings')
     .select('google_analytics_id')
     .single()
-
   const analyticsId = data?.google_analytics_id as string | null
 
   return (

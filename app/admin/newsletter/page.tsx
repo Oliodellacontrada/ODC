@@ -1,61 +1,156 @@
-import { createServerClient } from '@/lib/supabase-server'
-import { redirect } from 'next/navigation'
-import NewsletterList from '@/components/admin/NewsletterList'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+import { Send, Users, Mail } from 'lucide-react'
 
 type Subscriber = {
   id: string
   email: string
-  subscribed: boolean
-  subscribed_at: string
-  unsubscribed_at: string | null
+  confirmed: boolean
+  created_at: string
 }
 
-export default async function AdminNewsletterPage() {
-  const supabase = createServerClient()
-  
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  if (!session) {
-    redirect('/admin/login')
+export default function AdminNewsletterPage() {
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([])
+  const [subject, setSubject] = useState('')
+  const [content, setContent] = useState('')
+  const [sending, setSending] = useState(false)
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null)
+  const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/admin/login')
+        return
+      }
+      const { data } = await supabase
+        .from('newsletter_subscribers')
+        .select('*')
+        .order('created_at', { ascending: false })
+      setSubscribers((data || []) as Subscriber[])
+    }
+    load()
+  }, [])
+
+  const confirmed = subscribers.filter((s) => s.confirmed)
+
+  async function handleSend() {
+    if (!subject.trim() || !content.trim()) return
+    if (!confirm(`Stai per inviare la newsletter a ${confirmed.length} iscritti. Confermi?`)) return
+
+    setSending(true)
+    setMessage(null)
+
+    try {
+      const res = await fetch('/api/newsletter/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject, content }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setMessage({ text: `Newsletter inviata con successo a ${data.sent} iscritti!`, ok: true })
+        setSubject('')
+        setContent('')
+      } else {
+        setMessage({ text: data.error || 'Errore durante invio', ok: false })
+      }
+    } catch {
+      setMessage({ text: 'Errore durante invio', ok: false })
+    } finally {
+      setSending(false)
+    }
   }
 
-  const { data: subscribers } = await supabase
-    .from('newsletter_subscribers')
-    .select('*')
-    .order('subscribed_at', { ascending: false })
-
-  const typedSubscribers = (subscribers || []) as Subscriber[]
-  const activeSubscribers = typedSubscribers.filter(s => s.subscribed)
-  const unsubscribed = typedSubscribers.filter(s => !s.subscribed)
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold text-olive-800 mb-8">
-        Newsletter
-      </h1>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-3xl font-bold text-olive-800 mb-8">Invia Newsletter</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-stone-600 mb-2">Iscritti Attivi</p>
-          <p className="text-3xl font-bold text-olive-700">
-            {activeSubscribers.length}
-          </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="bg-white rounded-2xl shadow p-6 flex items-center gap-4 border border-olive-100">
+          <div className="p-3 bg-olive-100 rounded-xl">
+            <Users className="w-6 h-6 text-olive-700" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-olive-800">{subscribers.length}</p>
+            <p className="text-stone-500 text-sm">Iscritti totali</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-stone-600 mb-2">Disiscritti</p>
-          <p className="text-3xl font-bold text-stone-500">
-            {unsubscribed.length}
-          </p>
+        <div className="bg-white rounded-2xl shadow p-6 flex items-center gap-4 border border-olive-100">
+          <div className="p-3 bg-green-100 rounded-xl">
+            <Mail className="w-6 h-6 text-green-700" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-green-700">{confirmed.length}</p>
+            <p className="text-stone-500 text-sm">Confermati</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-stone-600 mb-2">Totale</p>
-          <p className="text-3xl font-bold text-stone-700">
-            {typedSubscribers.length}
-          </p>
+        <div className="bg-white rounded-2xl shadow p-6 flex items-center gap-4 border border-olive-100">
+          <div className="p-3 bg-amber-100 rounded-xl">
+            <Send className="w-6 h-6 text-amber-700" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-amber-700">{subscribers.length - confirmed.length}</p>
+            <p className="text-stone-500 text-sm">In attesa di conferma</p>
+          </div>
         </div>
       </div>
 
-      <NewsletterList subscribers={typedSubscribers} />
+      <div className="bg-white rounded-2xl shadow-lg border border-olive-100 p-8">
+        <h2 className="text-xl font-bold text-olive-800 mb-6 flex items-center gap-2">
+          <Send className="w-5 h-5" />
+          Scrivi la newsletter
+        </h2>
+
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-1">
+              Oggetto
+            </label>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Es. Novita dalla campagna - Marzo 2026"
+              className="w-full border border-stone-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-olive-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-1">
+              Contenuto
+            </label>
+            <p className="text-xs text-stone-400 mb-2">Puoi usare HTML per formattare il testo (es. &lt;b&gt;grassetto&lt;/b&gt;, &lt;br&gt; per andare a capo)</p>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={10}
+              placeholder="Scrivi qui il contenuto della newsletter..."
+              className="w-full border border-stone-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-olive-400 resize-none"
+            />
+          </div>
+
+          {message && (
+            <div className={`p-4 rounded-xl text-sm font-medium ${message.ok ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+              {message.text}
+            </div>
+          )}
+
+          <button
+            onClick={handleSend}
+            disabled={sending || !subject.trim() || !content.trim() || confirmed.length === 0}
+            className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-olive-600 to-olive-700 text-white font-bold rounded-xl hover:from-olive-700 hover:to-olive-800 transition-all disabled:opacity-50 shadow-lg"
+          >
+            <Send className="w-5 h-5" />
+            {sending ? 'Invio in corso...' : `Invia a ${confirmed.length} iscritti`}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

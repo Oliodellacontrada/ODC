@@ -12,11 +12,41 @@ type GalleryItem = {
   created_at: string
 }
 
-function getYoutubeEmbedUrl(url: string): string {
-  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/
-  const match = url.match(regExp)
-  const videoId = match && match[7].length === 11 ? match[7] : null
-  return videoId ? `https://www.youtube.com/embed/${videoId}` : url
+function getVideoEmbedUrl(url: string): string {
+  // YouTube
+  const ytRegExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/
+  const ytMatch = url.match(ytRegExp)
+  if (ytMatch && ytMatch[7].length === 11) {
+    return `https://www.youtube.com/embed/${ytMatch[7]}`
+  }
+
+  // Odysee - es: https://odysee.com/@canale/video-slug
+  if (url.includes('odysee.com')) {
+    // Converte URL normale in embed
+    const odyseeEmbed = url.replace('odysee.com/', 'odysee.com/$/embed/')
+    return odyseeEmbed
+  }
+
+  // PeerTube - es: https://peertube.esempio.com/videos/watch/UUID
+  if (url.includes('/videos/watch/')) {
+    return url.replace('/videos/watch/', '/videos/embed/')
+  }
+
+  // PeerTube formato alternativo: /w/UUID
+  if (url.match(/\/w\/[a-zA-Z0-9]+/)) {
+    const peertubeBase = url.split('/w/')[0]
+    const videoId = url.split('/w/')[1].split('?')[0]
+    return `${peertubeBase}/videos/embed/${videoId}`
+  }
+
+  return url
+}
+
+function getVideoProvider(url: string): string {
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YouTube'
+  if (url.includes('odysee.com')) return 'Odysee'
+  if (url.includes('/videos/watch/') || url.includes('/w/')) return 'PeerTube'
+  return 'Video'
 }
 
 export default function GalleryPage() {
@@ -56,7 +86,6 @@ export default function GalleryPage() {
     setLightboxIndex((lightboxIndex + 1) % photos.length)
   }
 
-  // Chiudi con tasto ESC e naviga con frecce
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') closeLightbox()
@@ -128,18 +157,22 @@ export default function GalleryPage() {
               <div key={video.id} className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow bg-white">
                 <div className="aspect-video">
                   <iframe
-                    src={getYoutubeEmbedUrl(video.url)}
+                    src={getVideoEmbedUrl(video.url)}
                     title={video.title || 'Video gallery'}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                     allowFullScreen
                     className="w-full h-full"
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
                   />
                 </div>
-                {video.title && (
-                  <div className="p-3">
+                <div className="p-3 flex items-center justify-between">
+                  {video.title && (
                     <p className="text-stone-700 font-medium">{video.title}</p>
-                  </div>
-                )}
+                  )}
+                  <span className="text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded-full ml-auto">
+                    {getVideoProvider(video.url)}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -152,7 +185,6 @@ export default function GalleryPage() {
           className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
           onClick={closeLightbox}
         >
-          {/* Pulsante chiudi */}
           <button
             onClick={closeLightbox}
             className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
@@ -160,7 +192,6 @@ export default function GalleryPage() {
             <X className="w-6 h-6" />
           </button>
 
-          {/* Freccia sinistra */}
           {photos.length > 1 && (
             <button
               onClick={(e) => { e.stopPropagation(); prevPhoto() }}
@@ -170,7 +201,6 @@ export default function GalleryPage() {
             </button>
           )}
 
-          {/* Immagine */}
           <div
             className="max-w-5xl max-h-[85vh] flex flex-col items-center gap-3"
             onClick={(e) => e.stopPropagation()}
@@ -186,7 +216,6 @@ export default function GalleryPage() {
             <p className="text-white/50 text-xs">{lightboxIndex + 1} / {photos.length}</p>
           </div>
 
-          {/* Freccia destra */}
           {photos.length > 1 && (
             <button
               onClick={(e) => { e.stopPropagation(); nextPhoto() }}

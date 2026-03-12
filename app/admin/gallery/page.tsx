@@ -1,8 +1,23 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Trash2, Image, Video, Plus, GripVertical } from 'lucide-react'
+import { Trash2, Image, Video, Plus } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 type GalleryItem = {
   id: string
@@ -40,6 +55,53 @@ function getVideoProvider(url: string): string {
   return 'Video'
 }
 
+function SortablePhoto({ photo, onDelete }: { photo: GalleryItem; onDelete: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: photo.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : 'auto',
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative group rounded-xl overflow-hidden shadow bg-white"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="aspect-square cursor-grab active:cursor-grabbing"
+      >
+        <img
+          src={photo.url}
+          alt={photo.title || ''}
+          className="w-full h-full object-cover"
+          draggable={false}
+        />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center">
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-full p-2">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      {photo.title && (
+        <p className="text-xs text-stone-600 px-2 py-1 truncate">{photo.title}</p>
+      )}
+      <button
+        onClick={() => onDelete(photo.id)}
+        className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  )
+}
+
 export default function AdminGalleryPage() {
   const supabase = createClient()
   const [items, setItems] = useState<GalleryItem[]>([])
@@ -49,8 +111,12 @@ export default function AdminGalleryPage() {
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null)
-  const dragItem = useRef<number | null>(null)
-  const dragOverItem = useRef<number | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  )
 
   async function loadItems() {
     const { data } = await supabase
@@ -61,9 +127,7 @@ export default function AdminGalleryPage() {
     setLoading(false)
   }
 
-  useEffect(() => {
-    loadItems()
-  }, [])
+  useEffect(() => { loadItems() }, [])
 
   async function handleAdd() {
     if (!url.trim()) return
@@ -94,26 +158,25 @@ export default function AdminGalleryPage() {
     loadItems()
   }
 
-  async function handleDragEnd(type: 'photo' | 'video') {
-    if (dragItem.current === null || dragOverItem.current === null) return
-    if (dragItem.current === dragOverItem.current) return
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
 
-    const typeItems = items.filter(i => i.type === type)
-    const otherItems = items.filter(i => i.type !== type)
+    const photos = items.filter(i => i.type === 'photo')
+    const others = items.filter(i => i.type !== 'photo')
 
-    const reordered = [...typeItems]
-    const dragged = reordered.splice(dragItem.current, 1)[0]
-    reordered.splice(dragOverItem.current, 0, dragged)
+    const oldIndex = photos.findIndex(p => p.id === active.id)
+    const newIndex = photos.findIndex(p => p.id === over.id)
 
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(photos, oldIndex, newIndex)
     const updated = reordered.map((item, index) => ({ ...item, position: index }))
-    setItems([...otherItems, ...updated])
+    setItems([...others, ...updated])
 
     for (const item of updated) {
       await (supabase as any).from('gallery_items').update({ position: item.position }).eq('id', item.id)
     }
-
-    dragItem.current = null
-    dragOverItem.current = null
   }
 
   const photos = items.filter((i) => i.type === 'photo')
@@ -132,9 +195,7 @@ export default function AdminGalleryPage() {
           <button
             onClick={() => { setActiveTab('photo'); setUrl(''); setMessage(null) }}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-              activeTab === 'photo'
-                ? 'bg-olive-600 text-white shadow'
-                : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+              activeTab === 'photo' ? 'bg-olive-600 text-white shadow' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
             <Image className="w-4 h-4" /> Foto
@@ -142,9 +203,7 @@ export default function AdminGalleryPage() {
           <button
             onClick={() => { setActiveTab('video'); setUrl(''); setMessage(null) }}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-              activeTab === 'video'
-                ? 'bg-olive-600 text-white shadow'
-                : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+              activeTab === 'video' ? 'bg-olive-600 text-white shadow' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
             <Video className="w-4 h-4" /> Video
@@ -165,11 +224,7 @@ export default function AdminGalleryPage() {
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder={
-                activeTab === 'photo'
-                  ? 'https://res.cloudinary.com/...'
-                  : 'https://www.youtube.com/watch?v=...'
-              }
+              placeholder={activeTab === 'photo' ? 'https://res.cloudinary.com/...' : 'https://www.youtube.com/watch?v=...'}
               className="w-full border border-stone-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-olive-400"
             />
             {activeTab === 'video' && url && (
@@ -190,13 +245,11 @@ export default function AdminGalleryPage() {
               className="w-full border border-stone-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-olive-400"
             />
           </div>
-
           {message && (
             <p className={`text-sm font-medium ${message.ok ? 'text-green-600' : 'text-red-500'}`}>
               {message.text}
             </p>
           )}
-
           <button
             onClick={handleAdd}
             disabled={saving || !url.trim()}
@@ -218,39 +271,15 @@ export default function AdminGalleryPage() {
         ) : photos.length === 0 ? (
           <p className="text-stone-400 italic">Nessuna foto aggiunta.</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {photos.map((photo, index) => (
-              <div
-                key={photo.id}
-                draggable
-                onDragStart={() => { dragItem.current = index }}
-                onDragEnter={() => { dragOverItem.current = index }}
-                onDragEnd={() => handleDragEnd('photo')}
-                onDragOver={(e) => e.preventDefault()}
-                className="relative group rounded-xl overflow-hidden shadow bg-white cursor-grab active:cursor-grabbing active:scale-95 transition-transform"
-              >
-                <div className="aspect-square">
-                  <img
-                    src={photo.url}
-                    alt={photo.title || ''}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="absolute top-2 left-2 bg-black/40 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <GripVertical className="w-3.5 h-3.5 text-white" />
-                </div>
-                {photo.title && (
-                  <p className="text-xs text-stone-600 px-2 py-1 truncate">{photo.title}</p>
-                )}
-                <button
-                  onClick={() => handleDelete(photo.id)}
-                  className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={photos.map(p => p.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {photos.map((photo) => (
+                  <SortablePhoto key={photo.id} photo={photo} onDelete={handleDelete} />
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
       </section>
 

@@ -1,7 +1,7 @@
 'use client'
-
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import Link from 'next/link'
 
 export default function AdminLayout({
   children,
@@ -23,7 +23,12 @@ export default function AdminLayout({
     <div className="min-h-screen bg-stone-50">
       {!isLoginPage && (
         <div className="bg-olive-800 text-white px-6 py-2 flex justify-between items-center text-sm">
-          <span className="font-medium text-olive-200">Pannello Admin</span>
+          <Link
+            href="/admin"
+            className="font-medium text-olive-200 hover:text-white transition-colors"
+          >
+            Pannello Admin
+          </Link>
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 bg-olive-700 hover:bg-olive-600 px-3 py-1.5 rounded-lg transition-colors"

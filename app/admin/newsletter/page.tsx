@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Send, Users, Mail } from 'lucide-react'
+import { Send, Users, Mail, Trash2 } from 'lucide-react'
 
 type Subscriber = {
   id: string
   email: string
   subscribed: boolean
-  created_at: string
+  subscribed_at: string
 }
 
 export default function AdminNewsletterPage() {
@@ -21,34 +21,36 @@ export default function AdminNewsletterPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  useEffect(() => {
-    async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.push('/admin/login')
-        return
-      }
-      const { data, error } = await supabase
-        .from('newsletter_subscribers')
-        .select('*')
-        .order('subscribed_at', { ascending: false })
-      
-      if (error) console.error('Errore caricamento iscritti:', error)
-      setSubscribers((data || []) as Subscriber[])
+  async function load() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      router.push('/admin/login')
+      return
     }
-    load()
-  }, [])
+    const { data, error } = await supabase
+      .from('newsletter_subscribers')
+      .select('*')
+      .order('subscribed_at', { ascending: false })
+    if (error) console.error('Errore:', error)
+    setSubscribers((data || []) as Subscriber[])
+  }
+
+  useEffect(() => { load() }, [])
 
   const active = subscribers.filter((s) => s.subscribed === true)
   const cancelled = subscribers.filter((s) => s.subscribed === false)
 
+  async function handleDelete(id: string) {
+    if (!confirm('Rimuovere questo iscritto?')) return
+    await supabase.from('newsletter_subscribers').delete().eq('id', id)
+    load()
+  }
+
   async function handleSend() {
     if (!subject.trim() || !content.trim()) return
     if (!confirm(`Stai per inviare la newsletter a ${active.length} iscritti. Confermi?`)) return
-
     setSending(true)
     setMessage(null)
-
     try {
       const res = await fetch('/api/newsletter/send', {
         method: 'POST',
@@ -74,6 +76,7 @@ export default function AdminNewsletterPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold text-olive-800 mb-8">Invia Newsletter</h1>
 
+      {/* Statistiche */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div className="bg-white rounded-2xl shadow p-6 flex items-center gap-4 border border-olive-100">
           <div className="p-3 bg-olive-100 rounded-xl">
@@ -104,17 +107,44 @@ export default function AdminNewsletterPage() {
         </div>
       </div>
 
+      {/* Lista iscritti */}
+      <div className="bg-white rounded-2xl shadow-lg border border-olive-100 p-8 mb-10">
+        <h2 className="text-xl font-bold text-olive-800 mb-6 flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Lista iscritti
+        </h2>
+        {subscribers.length === 0 ? (
+          <p className="text-stone-400 italic">Nessun iscritto.</p>
+        ) : (
+          <div className="space-y-2">
+            {subscribers.map((s) => (
+              <div key={s.id} className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-100">
+                <div className="flex items-center gap-3">
+                  <span className={`w-2 h-2 rounded-full ${s.subscribed ? 'bg-green-500' : 'bg-stone-300'}`} />
+                  <span className="text-stone-700 font-medium">{s.email}</span>
+                  {!s.subscribed && <span className="text-xs text-stone-400 bg-stone-200 px-2 py-0.5 rounded-full">cancellato</span>}
+                </div>
+                <button
+                  onClick={() => handleDelete(s.id)}
+                  className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Form invio */}
       <div className="bg-white rounded-2xl shadow-lg border border-olive-100 p-8">
         <h2 className="text-xl font-bold text-olive-800 mb-6 flex items-center gap-2">
           <Send className="w-5 h-5" />
           Scrivi la newsletter
         </h2>
-
         <div className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">
-              Oggetto
-            </label>
+            <label className="block text-sm font-medium text-stone-700 mb-1">Oggetto</label>
             <input
               type="text"
               value={subject}
@@ -123,11 +153,8 @@ export default function AdminNewsletterPage() {
               className="w-full border border-stone-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-olive-400"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">
-              Contenuto
-            </label>
+            <label className="block text-sm font-medium text-stone-700 mb-1">Contenuto</label>
             <p className="text-xs text-stone-400 mb-2">Puoi usare HTML per formattare il testo (es. &lt;b&gt;grassetto&lt;/b&gt;, &lt;br&gt; per andare a capo)</p>
             <textarea
               value={content}
@@ -137,13 +164,11 @@ export default function AdminNewsletterPage() {
               className="w-full border border-stone-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-olive-400 resize-none"
             />
           </div>
-
           {message && (
             <div className={`p-4 rounded-xl text-sm font-medium ${message.ok ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
               {message.text}
             </div>
           )}
-
           <button
             onClick={handleSend}
             disabled={sending || !subject.trim() || !content.trim() || active.length === 0}

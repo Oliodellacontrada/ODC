@@ -67,11 +67,9 @@ export default async function HomePage() {
                 const ytId = post.youtube_url ? getYoutubeId(post.youtube_url) : null
                 const thumbnail = post.cover_image_url || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : null)
                 return (
-                  <a
+                  <Link
                     key={post.id}
-                    href={post.youtube_url || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={`/post/${post.slug}`}
                     className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all overflow-hidden border border-stone-100"
                   >
                     <div className="relative aspect-video overflow-hidden bg-stone-200">
@@ -82,7 +80,6 @@ export default async function HomePage() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       )}
-                      {/* Play button overlay */}
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="bg-red-600 rounded-full p-4 shadow-lg group-hover:scale-110 transition-transform">
                           <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
@@ -99,7 +96,7 @@ export default async function HomePage() {
                         <p className="text-stone-500 text-sm line-clamp-2">{post.excerpt}</p>
                       )}
                     </div>
-                  </a>
+                  </Link>
                 )
               })}
             </div>

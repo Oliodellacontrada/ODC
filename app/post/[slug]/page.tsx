@@ -20,7 +20,14 @@ type Post = {
   created_at: string
   meta_title: string | null
   meta_description: string | null
+  type: string | null
+  youtube_url: string | null
   posts_tags?: Array<{ tags: { id: string; name: string; slug: string; color: string } }>
+}
+
+function getYoutubeId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)
+  return match ? match[1] : null
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -48,48 +55,31 @@ export default async function PostPage({ params }: Props) {
   const supabase = createServerClient()
   const { data } = await supabase
     .from('posts')
-    .select(`
-      *,
-      posts_tags(tag_id, tags(id, name, slug, color))
-    `)
+    .select(`*, posts_tags(tag_id, tags(id, name, slug, color))`)
     .eq('slug', params.slug)
     .eq('status', 'published')
     .single()
   if (!data) notFound()
   const post = data as Post
   const tags = post.posts_tags?.map((pt) => pt.tags) || []
-
-  const wordCount = post.content.replace(/<[^>]*>/g, '').split(/\s+/).length
+  const isVideo = post.type === 'video'
+  const ytId = post.youtube_url ? getYoutubeId(post.youtube_url) : null
+  const wordCount = post.content?.replace(/<[^>]*>/g, '').split(/\s+/).length || 0
   const readingMinutes = Math.max(1, Math.round(wordCount / 150))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-50 via-olive-50/30 to-sage-50/30">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
-        {/* Torna al blog */}
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-olive-600 hover:text-olive-800 transition-colors mb-8 group font-medium"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Torna al blog
+          Torna alla home
         </Link>
 
         <article>
-          {/* Immagine di copertina */}
-          {post.cover_image_url && (
-            <div className="relative h-96 rounded-3xl overflow-hidden mb-10 shadow-xl">
-              <Image
-                src={post.cover_image_url}
-                alt={post.title}
-                fill
-                className="object-cover"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-            </div>
-          )}
-
           {/* Tags */}
           {tags.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -121,26 +111,69 @@ export default async function PostPage({ params }: Props) {
                 {formatDate(post.published_at || post.created_at)}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-olive-100 rounded-lg">
-                <Clock className="w-4 h-4 text-olive-600" />
+            {!isVideo && (
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-olive-100 rounded-lg">
+                  <Clock className="w-4 h-4 text-olive-600" />
+                </div>
+                <span className="text-sm font-medium">{readingMinutes} min di lettura</span>
               </div>
-              <span className="text-sm font-medium">
-                {readingMinutes} min di lettura
+            )}
+            {isVideo && (
+              <span className="flex items-center gap-1 text-sm font-medium text-red-500">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                Video
               </span>
-            </div>
+            )}
           </div>
 
-          {/* Contenuto */}
-          <div
-            className="prose prose-lg max-w-none prose-headings:text-olive-800 prose-a:text-olive-600 prose-strong:text-olive-900 prose-p:text-stone-700 prose-p:leading-relaxed [&_iframe]:w-full [&_iframe]:rounded-xl [&_iframe]:shadow-lg [&_iframe]:aspect-video [&_.youtube-embed]:aspect-video [&_.youtube-embed]:w-full"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
+          {/* VIDEO: iframe YouTube */}
+          {isVideo && ytId && (
+            <div className="rounded-3xl overflow-hidden shadow-xl mb-10 aspect-video">
+              <iframe
+                src={`https://www.youtube.com/embed/${ytId}`}
+                title={post.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowFullScreen
+                className="w-full h-full"
+              />
+            </div>
+          )}
 
-          {/* Footer articolo */}
+          {/* ARTICOLO: immagine copertina */}
+          {!isVideo && post.cover_image_url && (
+            <div className="relative h-96 rounded-3xl overflow-hidden mb-10 shadow-xl">
+              <Image
+                src={post.cover_image_url}
+                alt={post.title}
+                fill
+                className="object-cover"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+            </div>
+          )}
+
+          {/* Descrizione video o contenuto articolo */}
+          {isVideo ? (
+            post.excerpt && (
+              <p className="text-stone-600 text-lg leading-relaxed mb-10">{post.excerpt}</p>
+            )
+          ) : (
+            <div
+              className="prose prose-lg max-w-none prose-headings:text-olive-800 prose-a:text-olive-600 prose-strong:text-olive-900 prose-p:text-stone-700 prose-p:leading-relaxed [&_iframe]:w-full [&_iframe]:rounded-xl [&_iframe]:shadow-lg [&_iframe]:aspect-video"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+          )}
+
+          {/* Footer */}
           <div className="mt-16 pt-8 border-t-2 border-olive-100">
             <div className="bg-gradient-to-br from-olive-600 to-olive-700 rounded-3xl p-8 text-white text-center shadow-xl">
-              <p className="text-olive-100 mb-2 text-sm font-medium">Scritto con cura da</p>
+              <p className="text-olive-100 mb-2 text-sm font-medium">
+                {isVideo ? 'Un video di' : 'Scritto con cura da'}
+              </p>
               <p className="text-2xl font-bold mb-4">Olio della Contrada</p>
               <p className="text-olive-200 text-sm leading-relaxed max-w-md mx-auto">
                 Produttori di olio extravergine biologico monocultivar Carolea, dalle colline di Cleto in Calabria.
@@ -153,7 +186,6 @@ export default async function PostPage({ params }: Props) {
               </Link>
             </div>
           </div>
-
         </article>
       </div>
     </div>

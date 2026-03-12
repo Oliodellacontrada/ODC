@@ -1,4 +1,4 @@
-import { Leaf, Cog, Mountain, TreePine, Users, Mail, Phone } from 'lucide-react'
+import { Leaf, Cog, Mountain, TreeDeciduous, Users, Mail, Phone } from 'lucide-react'
 
 export default function ChiSiamoPage() {
   return (
@@ -73,7 +73,7 @@ export default function ChiSiamoPage() {
           <div className="bg-gradient-to-br from-amber-50 to-olive-50 rounded-3xl shadow-lg border-2 border-amber-200 p-8">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-3 bg-olive-200 rounded-xl">
-                <TreePine className="w-6 h-6 text-olive-800" />
+                <TreeDeciduous className="w-6 h-6 text-olive-800" />
               </div>
               <h2 className="text-2xl font-bold text-olive-800">La Cultivar Carolea</h2>
             </div>

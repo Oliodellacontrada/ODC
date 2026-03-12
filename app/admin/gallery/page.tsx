@@ -12,6 +12,37 @@ type GalleryItem = {
   created_at: string
 }
 
+function getVideoEmbedUrl(url: string): string {
+  // YouTube
+  const ytRegExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/
+  const ytMatch = url.match(ytRegExp)
+  if (ytMatch && ytMatch[7].length === 11) {
+    return `https://www.youtube.com/embed/${ytMatch[7]}`
+  }
+  // Odysee
+  if (url.includes('odysee.com')) {
+    return url.replace('odysee.com/', 'odysee.com/$/embed/')
+  }
+  // PeerTube /videos/watch/
+  if (url.includes('/videos/watch/')) {
+    return url.replace('/videos/watch/', '/videos/embed/')
+  }
+  // PeerTube /w/
+  if (url.match(/\/w\/[a-zA-Z0-9]+/)) {
+    const base = url.split('/w/')[0]
+    const videoId = url.split('/w/')[1].split('?')[0]
+    return `${base}/videos/embed/${videoId}`
+  }
+  return url
+}
+
+function getVideoProvider(url: string): string {
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YouTube'
+  if (url.includes('odysee.com')) return 'Odysee'
+  if (url.includes('/videos/watch/') || url.match(/\/w\/[a-zA-Z0-9]+/)) return 'PeerTube'
+  return 'Video'
+}
+
 export default function AdminGalleryPage() {
   const supabase = createClient()
   const [items, setItems] = useState<GalleryItem[]>([])
@@ -39,7 +70,6 @@ export default function AdminGalleryPage() {
     if (!url.trim()) return
     setSaving(true)
     setMessage(null)
-
     const { error } = await (supabase as any)
       .from('gallery_items')
       .insert({
@@ -47,7 +77,6 @@ export default function AdminGalleryPage() {
         url: url.trim(),
         title: title.trim() || null,
       })
-
     setSaving(false)
     if (error) {
       setMessage({ text: 'Errore durante il salvataggio.', ok: false })
@@ -81,7 +110,7 @@ export default function AdminGalleryPage() {
         {/* Tab tipo */}
         <div className="flex gap-2 mb-6">
           <button
-            onClick={() => setActiveTab('photo')}
+            onClick={() => { setActiveTab('photo'); setUrl(''); setMessage(null) }}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
               activeTab === 'photo'
                 ? 'bg-olive-600 text-white shadow'
@@ -91,7 +120,7 @@ export default function AdminGalleryPage() {
             <Image className="w-4 h-4" /> Foto
           </button>
           <button
-            onClick={() => setActiveTab('video')}
+            onClick={() => { setActiveTab('video'); setUrl(''); setMessage(null) }}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
               activeTab === 'video'
                 ? 'bg-olive-600 text-white shadow'
@@ -105,8 +134,13 @@ export default function AdminGalleryPage() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">
-              {activeTab === 'photo' ? 'URL Cloudinary' : 'URL YouTube'}
+              {activeTab === 'photo' ? 'URL Cloudinary' : 'URL Video (YouTube, Odysee, PeerTube)'}
             </label>
+            {activeTab === 'video' && (
+              <p className="text-xs text-stone-400 mb-2">
+                Esempi: youtube.com/watch?v=... · odysee.com/@canale/video · peertube.esempio.com/videos/watch/UUID
+              </p>
+            )}
             <input
               type="url"
               value={url}
@@ -118,6 +152,11 @@ export default function AdminGalleryPage() {
               }
               className="w-full border border-stone-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-olive-400"
             />
+            {activeTab === 'video' && url && (
+              <p className="text-xs text-olive-600 mt-1 font-medium">
+                Provider rilevato: {getVideoProvider(url)}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">
@@ -198,15 +237,22 @@ export default function AdminGalleryPage() {
               <div key={video.id} className="relative group rounded-xl overflow-hidden shadow bg-white">
                 <div className="aspect-video">
                   <iframe
-                    src={`https://www.youtube.com/embed/${new URL(video.url).searchParams.get('v') || video.url.split('/').pop()}`}
+                    src={getVideoEmbedUrl(video.url)}
                     title={video.title || 'Video'}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                     allowFullScreen
                     className="w-full h-full"
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
                   />
                 </div>
-                {video.title && (
-                  <p className="text-sm text-stone-600 px-3 py-2 font-medium">{video.title}</p>
-                )}
+                <div className="flex items-center justify-between px-3 py-2">
+                  {video.title && (
+                    <p className="text-sm text-stone-600 font-medium truncate">{video.title}</p>
+                  )}
+                  <span className="text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded-full ml-auto shrink-0">
+                    {getVideoProvider(video.url)}
+                  </span>
+                </div>
                 <button
                   onClick={() => handleDelete(video.id)}
                   className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"

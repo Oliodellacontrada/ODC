@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Trash2, Image, Video, Plus } from 'lucide-react'
+import { Trash2, Image, Video, Plus, GripVertical } from 'lucide-react'
 
 type GalleryItem = {
   id: string
@@ -10,24 +10,21 @@ type GalleryItem = {
   url: string
   title: string | null
   created_at: string
+  position: number
 }
 
 function getVideoEmbedUrl(url: string): string {
-  // YouTube
   const ytRegExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/
   const ytMatch = url.match(ytRegExp)
   if (ytMatch && ytMatch[7].length === 11) {
     return `https://www.youtube.com/embed/${ytMatch[7]}`
   }
-  // Odysee
   if (url.includes('odysee.com')) {
     return url.replace('odysee.com/', 'odysee.com/$/embed/')
   }
-  // PeerTube /videos/watch/
   if (url.includes('/videos/watch/')) {
     return url.replace('/videos/watch/', '/videos/embed/')
   }
-  // PeerTube /w/
   if (url.match(/\/w\/[a-zA-Z0-9]+/)) {
     const base = url.split('/w/')[0]
     const videoId = url.split('/w/')[1].split('?')[0]
@@ -52,12 +49,14 @@ export default function AdminGalleryPage() {
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null)
+  const dragItem = useRef<number | null>(null)
+  const dragOverItem = useRef<number | null>(null)
 
   async function loadItems() {
     const { data } = await supabase
       .from('gallery_items')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('position', { ascending: true })
     setItems((data as GalleryItem[]) || [])
     setLoading(false)
   }
@@ -76,6 +75,7 @@ export default function AdminGalleryPage() {
         type: activeTab,
         url: url.trim(),
         title: title.trim() || null,
+        position: items.filter(i => i.type === activeTab).length,
       })
     setSaving(false)
     if (error) {
@@ -94,6 +94,28 @@ export default function AdminGalleryPage() {
     loadItems()
   }
 
+  async function handleDragEnd(type: 'photo' | 'video') {
+    if (dragItem.current === null || dragOverItem.current === null) return
+    if (dragItem.current === dragOverItem.current) return
+
+    const typeItems = items.filter(i => i.type === type)
+    const otherItems = items.filter(i => i.type !== type)
+
+    const reordered = [...typeItems]
+    const dragged = reordered.splice(dragItem.current, 1)[0]
+    reordered.splice(dragOverItem.current, 0, dragged)
+
+    const updated = reordered.map((item, index) => ({ ...item, position: index }))
+    setItems([...otherItems, ...updated])
+
+    for (const item of updated) {
+      await supabase.from('gallery_items').update({ position: item.position }).eq('id', item.id)
+    }
+
+    dragItem.current = null
+    dragOverItem.current = null
+  }
+
   const photos = items.filter((i) => i.type === 'photo')
   const videos = items.filter((i) => i.type === 'video')
 
@@ -106,8 +128,6 @@ export default function AdminGalleryPage() {
         <h2 className="text-xl font-semibold text-olive-700 mb-4 flex items-center gap-2">
           <Plus className="w-5 h-5" /> Aggiungi elemento
         </h2>
-
-        {/* Tab tipo */}
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => { setActiveTab('photo'); setUrl(''); setMessage(null) }}
@@ -189,23 +209,35 @@ export default function AdminGalleryPage() {
 
       {/* Lista Foto */}
       <section className="mb-10">
-        <h2 className="text-2xl font-bold text-olive-700 mb-4 flex items-center gap-2">
+        <h2 className="text-2xl font-bold text-olive-700 mb-2 flex items-center gap-2">
           <span>📷</span> Foto ({photos.length})
         </h2>
+        <p className="text-xs text-stone-400 mb-4">Trascina le foto per riordinarle</p>
         {loading ? (
           <p className="text-stone-400">Caricamento...</p>
         ) : photos.length === 0 ? (
           <p className="text-stone-400 italic">Nessuna foto aggiunta.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {photos.map((photo) => (
-              <div key={photo.id} className="relative group rounded-xl overflow-hidden shadow bg-white">
+            {photos.map((photo, index) => (
+              <div
+                key={photo.id}
+                draggable
+                onDragStart={() => { dragItem.current = index }}
+                onDragEnter={() => { dragOverItem.current = index }}
+                onDragEnd={() => handleDragEnd('photo')}
+                onDragOver={(e) => e.preventDefault()}
+                className="relative group rounded-xl overflow-hidden shadow bg-white cursor-grab active:cursor-grabbing active:scale-95 transition-transform"
+              >
                 <div className="aspect-square">
                   <img
                     src={photo.url}
                     alt={photo.title || ''}
                     className="w-full h-full object-cover"
                   />
+                </div>
+                <div className="absolute top-2 left-2 bg-black/40 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <GripVertical className="w-3.5 h-3.5 text-white" />
                 </div>
                 {photo.title && (
                   <p className="text-xs text-stone-600 px-2 py-1 truncate">{photo.title}</p>

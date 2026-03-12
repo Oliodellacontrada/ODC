@@ -133,7 +133,7 @@ export default async function PostPage({ params }: Props) {
 
           {/* Contenuto */}
           <div
-            className="prose prose-lg max-w-none prose-headings:text-olive-800 prose-a:text-olive-600 prose-strong:text-olive-900 prose-p:text-stone-700 prose-p:leading-relaxed"
+            className="prose prose-lg max-w-none prose-headings:text-olive-800 prose-a:text-olive-600 prose-strong:text-olive-900 prose-p:text-stone-700 prose-p:leading-relaxed [&_iframe]:w-full [&_iframe]:rounded-xl [&_iframe]:shadow-lg [&_iframe]:aspect-video [&_.youtube-embed]:aspect-video [&_.youtube-embed]:w-full"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
 

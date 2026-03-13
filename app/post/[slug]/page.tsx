@@ -184,7 +184,7 @@ export default async function PostPage({ params }: Props) {
           <div className="mt-16 pt-8 border-t-2 border-olive-100">
             <div className="bg-gradient-to-br from-olive-600 to-olive-700 rounded-3xl p-8 text-white text-center shadow-xl">
               <p className="text-olive-100 mb-2 text-sm font-medium">
-                {isVideo ? 'Un video di' : 'Scritto con cura da'}
+                {isVideo ? 'Condividiamo questo video perché parla la nostra stessa lingua: quella della terra, dell'ulivo e del fare le cose con cura.' : 'Scritto con cura da'}
               </p>
               <p className="text-2xl font-bold mb-4">Olio della Contrada</p>
               <p className="text-olive-200 text-sm leading-relaxed max-w-md mx-auto">

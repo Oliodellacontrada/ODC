@@ -82,9 +82,16 @@ export default function GalleryPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="text-center mb-12">
+
+      {/* Header */}
+      <div className="text-center mb-10">
         <h1 className="text-4xl font-bold text-olive-800 mb-4">Gallery</h1>
-        <div className="h-1 w-24 bg-gradient-to-r from-olive-400 to-honey-400 rounded-full mx-auto"></div>
+        <div className="h-1 w-24 bg-gradient-to-r from-olive-400 to-honey-400 rounded-full mx-auto mb-6"></div>
+        <p className="text-stone-600 text-lg leading-relaxed max-w-2xl mx-auto italic">
+          Ogni immagine racconta un pezzo del nostro uliveto: le piante secolari, i frutti, la terra di Cleto.
+          Scatti e riprese fatti da noi, nel corso delle stagioni, per condividere quello che di solito
+          resta solo tra le mani di chi lavora la terra.
+        </p>
       </div>
 
       <section className="mb-16">

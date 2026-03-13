@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Send, Users, Mail, Trash2, Plus } from 'lucide-react'
+import { Send, Users, Mail, Trash2, Plus, Download, Upload } from 'lucide-react'
 
 type Subscriber = {
   id: string
@@ -21,6 +21,8 @@ export default function AdminNewsletterPage() {
   const [newEmail, setNewEmail] = useState('')
   const [addingEmail, setAddingEmail] = useState(false)
   const [addMessage, setAddMessage] = useState<{ text: string; ok: boolean } | null>(null)
+  const [importMessage, setImportMessage] = useState<{ text: string; ok: boolean } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -72,6 +74,64 @@ export default function AdminNewsletterPage() {
       setNewEmail('')
       load()
     }
+  }
+
+  // Esporta CSV
+  function handleExport() {
+    const rows = ['email,stato']
+    subscribers.forEach(s => {
+      rows.push(`${s.email},${s.subscribed ? 'attivo' : 'cancellato'}`)
+    })
+    const csv = rows.join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `newsletter-iscritti-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  // Importa CSV
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImportMessage(null)
+
+    const text = await file.text()
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+
+    // Salta header se presente
+    const emailLines = lines.filter(l => l.includes('@'))
+    if (emailLines.length === 0) {
+      setImportMessage({ text: 'Nessuna email trovata nel file.', ok: false })
+      return
+    }
+
+    const emails = emailLines.map(l => l.split(',')[0].trim().toLowerCase())
+    const existingEmails = subscribers.map(s => s.email.toLowerCase())
+
+    const newEmails = emails.filter(e => !existingEmails.includes(e))
+
+    if (newEmails.length === 0) {
+      setImportMessage({ text: 'Tutte le email sono già presenti.', ok: false })
+      return
+    }
+
+    const toInsert = newEmails.map(email => ({ email, subscribed: true }))
+    const { error } = await (supabase as any)
+      .from('newsletter_subscribers')
+      .insert(toInsert)
+
+    if (error) {
+      setImportMessage({ text: 'Errore durante l\'importazione.', ok: false })
+    } else {
+      setImportMessage({ text: `${newEmails.length} email importate con successo!`, ok: true })
+      load()
+    }
+
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   async function handleSend() {
@@ -131,10 +191,43 @@ export default function AdminNewsletterPage() {
 
       {/* Lista iscritti */}
       <div className="bg-white rounded-2xl shadow-lg border border-olive-100 p-8 mb-10">
-        <h2 className="text-xl font-bold text-olive-800 mb-6 flex items-center gap-2">
-          <Users className="w-5 h-5" />
-          Lista iscritti
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-olive-800 flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Lista iscritti
+          </h2>
+          <div className="flex gap-2">
+            {/* Esporta */}
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-olive-700 bg-olive-50 hover:bg-olive-100 border border-olive-200 rounded-xl transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Esporta CSV
+            </button>
+            {/* Importa */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-olive-700 bg-olive-50 hover:bg-olive-100 border border-olive-200 rounded-xl transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              Importa CSV
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.txt"
+              onChange={handleImport}
+              className="hidden"
+            />
+          </div>
+        </div>
+
+        {importMessage && (
+          <div className={`mb-4 p-3 rounded-xl text-sm font-medium ${importMessage.ok ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            {importMessage.text}
+          </div>
+        )}
 
         {/* Aggiungi email */}
         <div className="flex gap-3 mb-6">

@@ -33,6 +33,8 @@ function getYoutubeId(url: string): string | null {
   return match ? match[1] : null
 }
 
+const videoFooterText = "Condividiamo questo video perché parla la nostra stessa lingua: quella della terra, dell'ulivo e del fare le cose con cura."
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = createServerClient()
   const { data } = await supabase
@@ -81,7 +83,6 @@ export default async function PostPage({ params }: Props) {
         </Link>
 
         <article>
-          {/* Tags */}
           {tags.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <Tag className="w-4 h-4 text-stone-400" />
@@ -94,15 +95,11 @@ export default async function PostPage({ params }: Props) {
             </div>
           )}
 
-          {/* Titolo */}
           <h1 className="text-4xl md:text-5xl font-bold text-olive-800 mb-6 leading-tight">
             {post.title}
           </h1>
 
-          {/* Meta info */}
           <div className="flex flex-wrap items-center gap-6 text-stone-500 mb-10 pb-8 border-b-2 border-olive-100">
-
-            {/* Autore */}
             {post.author_name && (
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-olive-100 rounded-lg">
@@ -113,8 +110,6 @@ export default async function PostPage({ params }: Props) {
                 </span>
               </div>
             )}
-
-            {/* Data */}
             {showDate && (
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-olive-100 rounded-lg">
@@ -125,8 +120,6 @@ export default async function PostPage({ params }: Props) {
                 </span>
               </div>
             )}
-
-            {/* Tempo lettura (solo articoli) */}
             {!isVideo && (
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-olive-100 rounded-lg">
@@ -135,8 +128,6 @@ export default async function PostPage({ params }: Props) {
                 <span className="text-sm font-medium">{readingMinutes} min di lettura</span>
               </div>
             )}
-
-            {/* Badge video */}
             {isVideo && (
               <span className="flex items-center gap-1 text-sm font-medium text-red-500">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -147,7 +138,6 @@ export default async function PostPage({ params }: Props) {
             )}
           </div>
 
-          {/* VIDEO: iframe YouTube */}
           {isVideo && ytId && (
             <div className="rounded-3xl overflow-hidden shadow-xl mb-10 aspect-video">
               <iframe
@@ -160,7 +150,6 @@ export default async function PostPage({ params }: Props) {
             </div>
           )}
 
-          {/* ARTICOLO: immagine copertina */}
           {!isVideo && post.cover_image_url && (
             <div className="relative h-96 rounded-3xl overflow-hidden mb-10 shadow-xl">
               <Image src={post.cover_image_url} alt={post.title} fill className="object-cover" priority />
@@ -168,7 +157,6 @@ export default async function PostPage({ params }: Props) {
             </div>
           )}
 
-          {/* Contenuto */}
           {isVideo ? (
             post.excerpt && (
               <p className="text-stone-600 text-lg leading-relaxed mb-10">{post.excerpt}</p>
@@ -180,16 +168,24 @@ export default async function PostPage({ params }: Props) {
             />
           )}
 
-          {/* Footer */}
           <div className="mt-16 pt-8 border-t-2 border-olive-100">
             <div className="bg-gradient-to-br from-olive-600 to-olive-700 rounded-3xl p-8 text-white text-center shadow-xl">
-              <p className="text-olive-100 mb-2 text-sm font-medium">
-                {isVideo ? 'Condividiamo questo video perché parla la nostra stessa lingua: quella della terra, dell'ulivo e del fare le cose con cura.' : 'Scritto con cura da'}
-              </p>
-              <p className="text-2xl font-bold mb-4">Olio della Contrada</p>
-              <p className="text-olive-200 text-sm leading-relaxed max-w-md mx-auto">
-                Produttori di olio extravergine biologico monocultivar Carolea, dalle colline di Cleto in Calabria.
-              </p>
+              {isVideo ? (
+                <div>
+                  <p className="text-olive-100 mb-4 text-base leading-relaxed max-w-lg mx-auto italic">
+                    {videoFooterText}
+                  </p>
+                  <p className="text-xl font-bold mb-2">Olio della Contrada</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-olive-100 mb-2 text-sm font-medium">Scritto con cura da</p>
+                  <p className="text-2xl font-bold mb-4">Olio della Contrada</p>
+                  <p className="text-olive-200 text-sm leading-relaxed max-w-md mx-auto">
+                    Produttori di olio extravergine biologico monocultivar Carolea, dalle colline di Cleto in Calabria.
+                  </p>
+                </div>
+              )}
               <Link href="/contatti"
                 className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-white text-olive-700 font-semibold rounded-xl hover:bg-olive-50 transition-colors shadow">
                 Contattaci

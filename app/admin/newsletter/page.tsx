@@ -26,10 +26,7 @@ export default function AdminNewsletterPage() {
 
   async function load() {
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      router.push('/admin/login')
-      return
-    }
+    if (!session) { router.push('/admin/login'); return }
     const { data, error } = await supabase
       .from('newsletter_subscribers')
       .select('*')
@@ -46,6 +43,14 @@ export default function AdminNewsletterPage() {
   async function handleDelete(id: string) {
     if (!confirm('Rimuovere questo iscritto?')) return
     await supabase.from('newsletter_subscribers').delete().eq('id', id)
+    load()
+  }
+
+  async function handleToggle(s: Subscriber) {
+    await (supabase as any)
+      .from('newsletter_subscribers')
+      .update({ subscribed: !s.subscribed })
+      .eq('id', s.id)
     load()
   }
 
@@ -102,27 +107,21 @@ export default function AdminNewsletterPage() {
       {/* Statistiche */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div className="bg-white rounded-2xl shadow p-6 flex items-center gap-4 border border-olive-100">
-          <div className="p-3 bg-olive-100 rounded-xl">
-            <Users className="w-6 h-6 text-olive-700" />
-          </div>
+          <div className="p-3 bg-olive-100 rounded-xl"><Users className="w-6 h-6 text-olive-700" /></div>
           <div>
             <p className="text-2xl font-bold text-olive-800">{subscribers.length}</p>
             <p className="text-stone-500 text-sm">Iscritti totali</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl shadow p-6 flex items-center gap-4 border border-olive-100">
-          <div className="p-3 bg-green-100 rounded-xl">
-            <Mail className="w-6 h-6 text-green-700" />
-          </div>
+          <div className="p-3 bg-green-100 rounded-xl"><Mail className="w-6 h-6 text-green-700" /></div>
           <div>
             <p className="text-2xl font-bold text-green-700">{active.length}</p>
             <p className="text-stone-500 text-sm">Attivi</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl shadow p-6 flex items-center gap-4 border border-olive-100">
-          <div className="p-3 bg-amber-100 rounded-xl">
-            <Send className="w-6 h-6 text-amber-700" />
-          </div>
+          <div className="p-3 bg-amber-100 rounded-xl"><Send className="w-6 h-6 text-amber-700" /></div>
           <div>
             <p className="text-2xl font-bold text-amber-700">{cancelled.length}</p>
             <p className="text-stone-500 text-sm">Cancellati</p>
@@ -137,7 +136,7 @@ export default function AdminNewsletterPage() {
           Lista iscritti
         </h2>
 
-        {/* Aggiungi email manualmente */}
+        {/* Aggiungi email */}
         <div className="flex gap-3 mb-6">
           <input
             type="email"
@@ -162,6 +161,8 @@ export default function AdminNewsletterPage() {
           </div>
         )}
 
+        <p className="text-xs text-stone-400 mb-3">Clicca sul pallino per attivare/disattivare un iscritto</p>
+
         {subscribers.length === 0 ? (
           <p className="text-stone-400 italic">Nessun iscritto.</p>
         ) : (
@@ -169,9 +170,15 @@ export default function AdminNewsletterPage() {
             {subscribers.map((s) => (
               <div key={s.id} className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-100">
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${s.subscribed ? 'bg-green-500' : 'bg-stone-300'}`} />
+                  <button
+                    onClick={() => handleToggle(s)}
+                    title={s.subscribed ? 'Clicca per disattivare' : 'Clicca per attivare'}
+                    className={`w-3 h-3 rounded-full shrink-0 transition-colors hover:opacity-70 ${s.subscribed ? 'bg-green-500' : 'bg-stone-300'}`}
+                  />
                   <span className="text-stone-700 font-medium text-sm truncate">{s.email}</span>
-                  {!s.subscribed && <span className="text-xs text-stone-400 bg-stone-200 px-2 py-0.5 rounded-full shrink-0">cancellato</span>}
+                  {!s.subscribed && (
+                    <span className="text-xs text-stone-400 bg-stone-200 px-2 py-0.5 rounded-full shrink-0">cancellato</span>
+                  )}
                 </div>
                 <button
                   onClick={() => handleDelete(s.id)}

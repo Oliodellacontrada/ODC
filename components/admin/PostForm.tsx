@@ -25,6 +25,8 @@ type Post = {
   meta_description: string
   type?: string
   youtube_url?: string | null
+  author_name?: string | null
+  show_date?: boolean
 }
 
 type Props = {
@@ -51,6 +53,8 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
   const [excerpt, setExcerpt] = useState(post?.excerpt || '')
   const [coverImage, setCoverImage] = useState(post?.cover_image_url || '')
   const [youtubeUrl, setYoutubeUrl] = useState(post?.youtube_url || '')
+  const [authorName, setAuthorName] = useState(post?.author_name || '')
+  const [showDate, setShowDate] = useState(post?.show_date !== false)
   const [status, setStatus] = useState(post?.status || 'draft')
   const [metaTitle, setMetaTitle] = useState(post?.meta_title || '')
   const [metaDesc, setMetaDesc] = useState(post?.meta_description || '')
@@ -62,9 +66,7 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
 
   function handleTitleChange(value: string) {
     setTitle(value)
-    if (!post) {
-      setSlug(generateSlug(value))
-    }
+    if (!post) setSlug(generateSlug(value))
   }
 
   function handleYoutubeUrl(url: string) {
@@ -75,9 +77,7 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
 
   function toggleTag(tagId: string) {
     setSelectedTags(prev =>
-      prev.includes(tagId)
-        ? prev.filter(id => id !== tagId)
-        : [...prev, tagId]
+      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
     )
   }
 
@@ -97,6 +97,8 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
         status,
         type,
         youtube_url: type === 'video' ? youtubeUrl : null,
+        author_name: authorName || null,
+        show_date: showDate,
         meta_title: metaTitle || title,
         meta_description: metaDesc || excerpt,
         author_id: user?.id,
@@ -106,26 +108,17 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
       let postId = post?.id
 
       if (post?.id) {
-        const { error } = await (supabase.from('posts') as any)
-          .update(postData)
-          .eq('id', post.id)
+        const { error } = await (supabase.from('posts') as any).update(postData).eq('id', post.id)
         if (error) throw error
       } else {
-        const { data, error } = await (supabase.from('posts') as any)
-          .insert([postData])
-          .select()
-          .single()
+        const { data, error } = await (supabase.from('posts') as any).insert([postData]).select().single()
         if (error) throw error
         postId = data.id
       }
 
-      await (supabase.from('posts_tags') as any)
-        .delete()
-        .eq('post_id', postId)
-
+      await (supabase.from('posts_tags') as any).delete().eq('post_id', postId)
       if (selectedTags.length > 0) {
-        await (supabase.from('posts_tags') as any)
-          .insert(selectedTags.map(tagId => ({ post_id: postId, tag_id: tagId })))
+        await (supabase.from('posts_tags') as any).insert(selectedTags.map(tagId => ({ post_id: postId, tag_id: tagId })))
       }
 
       router.push('/admin/posts')
@@ -143,74 +136,68 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
 
         {/* Tipo */}
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
-            Tipo di contenuto
-          </label>
+          <label className="block text-sm font-medium text-stone-700 mb-2">Tipo di contenuto</label>
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setType('articolo')}
-              className={`px-5 py-2 rounded-lg font-medium transition-all ${
-                type === 'articolo'
-                  ? 'bg-olive-600 text-white shadow'
-                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-              }`}
-            >
+            <button type="button" onClick={() => setType('articolo')}
+              className={`px-5 py-2 rounded-lg font-medium transition-all ${type === 'articolo' ? 'bg-olive-600 text-white shadow' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
               📝 Articolo
             </button>
-            <button
-              type="button"
-              onClick={() => setType('video')}
-              className={`px-5 py-2 rounded-lg font-medium transition-all ${
-                type === 'video'
-                  ? 'bg-olive-600 text-white shadow'
-                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-              }`}
-            >
+            <button type="button" onClick={() => setType('video')}
+              className={`px-5 py-2 rounded-lg font-medium transition-all ${type === 'video' ? 'bg-olive-600 text-white shadow' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
               🎬 Video
             </button>
           </div>
         </div>
 
+        {/* Titolo */}
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">Titolo *</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            required
-            className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500"
-          />
+          <input type="text" value={title} onChange={(e) => handleTitleChange(e.target.value)} required
+            className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500" />
         </div>
 
+        {/* Slug */}
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">Slug *</label>
+          <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} required
+            className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500" />
+        </div>
+
+        {/* Autore */}
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-2">
+            {type === 'video' ? 'Dal canale di...' : 'Autore'}
+          </label>
           <input
             type="text"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            required
+            value={authorName}
+            onChange={(e) => setAuthorName(e.target.value)}
+            placeholder={type === 'video' ? 'Es. Olio della Contrada, Marco Rossi...' : 'Es. Andrea Longo'}
             className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500"
           />
         </div>
 
-        {/* URL YouTube (solo per video) */}
+        {/* Mostra data */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowDate(!showDate)}
+            className={`relative w-11 h-6 rounded-full transition-colors ${showDate ? 'bg-olive-600' : 'bg-stone-300'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${showDate ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+          <label className="text-sm font-medium text-stone-700">Mostra data di pubblicazione</label>
+        </div>
+
+        {/* URL YouTube (solo video) */}
         {type === 'video' && (
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">
-              URL YouTube *
-            </label>
-            <input
-              type="url"
-              value={youtubeUrl}
-              onChange={(e) => handleYoutubeUrl(e.target.value)}
+            <label className="block text-sm font-medium text-stone-700 mb-2">URL YouTube *</label>
+            <input type="url" value={youtubeUrl} onChange={(e) => handleYoutubeUrl(e.target.value)}
               placeholder="https://www.youtube.com/watch?v=..."
-              className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500"
-            />
+              className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500" />
             {getYoutubeId(youtubeUrl) && (
-              <p className="text-xs text-green-600 mt-1 font-medium">
-                ✓ Thumbnail estratta automaticamente come copertina
-              </p>
+              <p className="text-xs text-green-600 mt-1 font-medium">✓ Thumbnail estratta automaticamente come copertina</p>
             )}
           </div>
         )}
@@ -221,22 +208,16 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
             Immagine di copertina {type === 'video' && <span className="text-stone-400">(estratta da YouTube)</span>}
           </label>
           {type === 'video' && coverImage ? (
-            <div className="relative">
+            <div>
               <img src={coverImage} alt="Thumbnail" className="w-full max-w-sm rounded-xl shadow" />
-              <button
-                type="button"
-                onClick={() => setCoverImage('')}
-                className="mt-2 text-xs text-red-500 hover:text-red-700"
-              >
-                Rimuovi
-              </button>
+              <button type="button" onClick={() => setCoverImage('')} className="mt-2 text-xs text-red-500 hover:text-red-700">Rimuovi</button>
             </div>
           ) : (
             <ImageUpload value={coverImage} onChange={setCoverImage} />
           )}
         </div>
 
-        {/* Contenuto (solo per articoli) */}
+        {/* Contenuto (solo articoli) */}
         {type === 'articolo' && (
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-2">Contenuto *</label>
@@ -244,32 +225,23 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
           </div>
         )}
 
-        {/* Descrizione (per entrambi) */}
+        {/* Estratto / Descrizione */}
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">
             {type === 'video' ? 'Descrizione del video' : 'Estratto'}
           </label>
-          <textarea
-            value={excerpt}
-            onChange={(e) => setExcerpt(e.target.value)}
-            rows={3}
-            className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500"
-          />
+          <textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={3}
+            className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500" />
         </div>
 
+        {/* Tags */}
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">Tags</label>
           <div className="flex flex-wrap gap-2">
             {tags.map((tag) => (
-              <button
-                key={tag.id}
-                type="button"
-                onClick={() => toggleTag(tag.id)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-opacity ${
-                  selectedTags.includes(tag.id) ? 'opacity-100' : 'opacity-40'
-                }`}
-                style={{ backgroundColor: tag.color, color: 'white' }}
-              >
+              <button key={tag.id} type="button" onClick={() => toggleTag(tag.id)}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-opacity ${selectedTags.includes(tag.id) ? 'opacity-100' : 'opacity-40'}`}
+                style={{ backgroundColor: tag.color, color: 'white' }}>
                 {tag.name}
               </button>
             ))}
@@ -277,50 +249,35 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
         </div>
       </div>
 
+      {/* SEO */}
       <div className="bg-white rounded-lg shadow p-6 space-y-6">
         <h3 className="text-lg font-semibold text-olive-800">SEO</h3>
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">Meta Title</label>
-          <input
-            type="text"
-            value={metaTitle}
-            onChange={(e) => setMetaTitle(e.target.value)}
-            className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500"
-          />
+          <input type="text" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)}
+            className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500" />
         </div>
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">Meta Description</label>
-          <textarea
-            value={metaDesc}
-            onChange={(e) => setMetaDesc(e.target.value)}
-            rows={2}
-            className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500"
-          />
+          <textarea value={metaDesc} onChange={(e) => setMetaDesc(e.target.value)} rows={2}
+            className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500" />
         </div>
       </div>
 
+      {/* Footer form */}
       <div className="flex justify-between items-center">
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500"
-        >
+        <select value={status} onChange={(e) => setStatus(e.target.value)}
+          className="px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500">
           <option value="draft">Bozza</option>
           <option value="published">Pubblicato</option>
         </select>
         <div className="flex gap-4">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-6 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
-          >
+          <button type="button" onClick={() => router.back()}
+            className="px-6 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors">
             Annulla
           </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-olive-600 text-white rounded-lg hover:bg-olive-700 transition-colors disabled:opacity-50"
-          >
+          <button type="submit" disabled={loading}
+            className="px-6 py-2 bg-olive-600 text-white rounded-lg hover:bg-olive-700 transition-colors disabled:opacity-50">
             {loading ? 'Salvataggio...' : 'Salva'}
           </button>
         </div>

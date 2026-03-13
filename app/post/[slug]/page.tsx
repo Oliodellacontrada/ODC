@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
 import { Metadata } from 'next'
-import { Calendar, Clock, Tag, ArrowLeft } from 'lucide-react'
+import { Calendar, Clock, Tag, ArrowLeft, User, Tv } from 'lucide-react'
 import Link from 'next/link'
 
 type Props = {
@@ -15,6 +15,7 @@ type Post = {
   title: string
   slug: string
   content: string
+  excerpt: string | null
   cover_image_url: string | null
   published_at: string | null
   created_at: string
@@ -22,7 +23,8 @@ type Post = {
   meta_description: string | null
   type: string | null
   youtube_url: string | null
-  excerpt: string | null
+  author_name: string | null
+  show_date: boolean | null
   posts_tags?: Array<{ tags: { id: string; name: string; slug: string; color: string } }>
 }
 
@@ -67,15 +69,13 @@ export default async function PostPage({ params }: Props) {
   const ytId = post.youtube_url ? getYoutubeId(post.youtube_url) : null
   const wordCount = post.content?.replace(/<[^>]*>/g, '').split(/\s+/).length || 0
   const readingMinutes = Math.max(1, Math.round(wordCount / 150))
+  const showDate = post.show_date !== false
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-50 via-olive-50/30 to-sage-50/30">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-olive-600 hover:text-olive-800 transition-colors mb-8 group font-medium"
-        >
+        <Link href="/" className="inline-flex items-center gap-2 text-olive-600 hover:text-olive-800 transition-colors mb-8 group font-medium">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Torna alla home
         </Link>
@@ -86,11 +86,8 @@ export default async function PostPage({ params }: Props) {
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <Tag className="w-4 h-4 text-stone-400" />
               {tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="px-3 py-1 rounded-full text-sm font-medium text-white shadow-sm"
-                  style={{ backgroundColor: tag.color }}
-                >
+                <span key={tag.id} className="px-3 py-1 rounded-full text-sm font-medium text-white shadow-sm"
+                  style={{ backgroundColor: tag.color }}>
                   {tag.name}
                 </span>
               ))}
@@ -104,14 +101,32 @@ export default async function PostPage({ params }: Props) {
 
           {/* Meta info */}
           <div className="flex flex-wrap items-center gap-6 text-stone-500 mb-10 pb-8 border-b-2 border-olive-100">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-olive-100 rounded-lg">
-                <Calendar className="w-4 h-4 text-olive-600" />
+
+            {/* Autore */}
+            {post.author_name && (
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-olive-100 rounded-lg">
+                  {isVideo ? <Tv className="w-4 h-4 text-olive-600" /> : <User className="w-4 h-4 text-olive-600" />}
+                </div>
+                <span className="text-sm font-medium">
+                  {isVideo ? `Dal canale di ${post.author_name}` : post.author_name}
+                </span>
               </div>
-              <span className="text-sm font-medium">
-                {formatDate(post.published_at || post.created_at)}
-              </span>
-            </div>
+            )}
+
+            {/* Data */}
+            {showDate && (
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-olive-100 rounded-lg">
+                  <Calendar className="w-4 h-4 text-olive-600" />
+                </div>
+                <span className="text-sm font-medium">
+                  {formatDate(post.published_at || post.created_at)}
+                </span>
+              </div>
+            )}
+
+            {/* Tempo lettura (solo articoli) */}
             {!isVideo && (
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-olive-100 rounded-lg">
@@ -120,6 +135,8 @@ export default async function PostPage({ params }: Props) {
                 <span className="text-sm font-medium">{readingMinutes} min di lettura</span>
               </div>
             )}
+
+            {/* Badge video */}
             {isVideo && (
               <span className="flex items-center gap-1 text-sm font-medium text-red-500">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -146,18 +163,12 @@ export default async function PostPage({ params }: Props) {
           {/* ARTICOLO: immagine copertina */}
           {!isVideo && post.cover_image_url && (
             <div className="relative h-96 rounded-3xl overflow-hidden mb-10 shadow-xl">
-              <Image
-                src={post.cover_image_url}
-                alt={post.title}
-                fill
-                className="object-cover"
-                priority
-              />
+              <Image src={post.cover_image_url} alt={post.title} fill className="object-cover" priority />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
             </div>
           )}
 
-          {/* Descrizione video o contenuto articolo */}
+          {/* Contenuto */}
           {isVideo ? (
             post.excerpt && (
               <p className="text-stone-600 text-lg leading-relaxed mb-10">{post.excerpt}</p>
@@ -179,14 +190,13 @@ export default async function PostPage({ params }: Props) {
               <p className="text-olive-200 text-sm leading-relaxed max-w-md mx-auto">
                 Produttori di olio extravergine biologico monocultivar Carolea, dalle colline di Cleto in Calabria.
               </p>
-              <Link
-                href="/contatti"
-                className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-white text-olive-700 font-semibold rounded-xl hover:bg-olive-50 transition-colors shadow"
-              >
+              <Link href="/contatti"
+                className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-white text-olive-700 font-semibold rounded-xl hover:bg-olive-50 transition-colors shadow">
                 Contattaci
               </Link>
             </div>
           </div>
+
         </article>
       </div>
     </div>

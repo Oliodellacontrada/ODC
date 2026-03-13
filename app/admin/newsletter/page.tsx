@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Send, Users, Mail, Trash2 } from 'lucide-react'
+import { Send, Users, Mail, Trash2, Plus } from 'lucide-react'
 
 type Subscriber = {
   id: string
@@ -18,6 +18,9 @@ export default function AdminNewsletterPage() {
   const [content, setContent] = useState('')
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null)
+  const [newEmail, setNewEmail] = useState('')
+  const [addingEmail, setAddingEmail] = useState(false)
+  const [addMessage, setAddMessage] = useState<{ text: string; ok: boolean } | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -44,6 +47,26 @@ export default function AdminNewsletterPage() {
     if (!confirm('Rimuovere questo iscritto?')) return
     await supabase.from('newsletter_subscribers').delete().eq('id', id)
     load()
+  }
+
+  async function handleAddEmail() {
+    if (!newEmail.trim() || !newEmail.includes('@')) {
+      setAddMessage({ text: 'Inserisci un indirizzo email valido.', ok: false })
+      return
+    }
+    setAddingEmail(true)
+    setAddMessage(null)
+    const { error } = await (supabase as any)
+      .from('newsletter_subscribers')
+      .insert({ email: newEmail.trim(), subscribed: true })
+    setAddingEmail(false)
+    if (error) {
+      setAddMessage({ text: error.message.includes('duplicate') ? 'Email già presente.' : 'Errore durante il salvataggio.', ok: false })
+    } else {
+      setAddMessage({ text: 'Email aggiunta con successo!', ok: true })
+      setNewEmail('')
+      load()
+    }
   }
 
   async function handleSend() {
@@ -113,20 +136,46 @@ export default function AdminNewsletterPage() {
           <Users className="w-5 h-5" />
           Lista iscritti
         </h2>
+
+        {/* Aggiungi email manualmente */}
+        <div className="flex gap-3 mb-6">
+          <input
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddEmail()}
+            placeholder="Aggiungi email manualmente..."
+            className="flex-1 border border-stone-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-olive-400"
+          />
+          <button
+            onClick={handleAddEmail}
+            disabled={addingEmail}
+            className="flex items-center gap-2 px-4 py-2.5 bg-olive-600 text-white text-sm font-semibold rounded-xl hover:bg-olive-700 transition-colors disabled:opacity-50"
+          >
+            <Plus className="w-4 h-4" />
+            Aggiungi
+          </button>
+        </div>
+        {addMessage && (
+          <div className={`mb-4 p-3 rounded-xl text-sm font-medium ${addMessage.ok ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            {addMessage.text}
+          </div>
+        )}
+
         {subscribers.length === 0 ? (
           <p className="text-stone-400 italic">Nessun iscritto.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {subscribers.map((s) => (
               <div key={s.id} className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-100">
-                <div className="flex items-center gap-3">
-                  <span className={`w-2 h-2 rounded-full ${s.subscribed ? 'bg-green-500' : 'bg-stone-300'}`} />
-                  <span className="text-stone-700 font-medium">{s.email}</span>
-                  {!s.subscribed && <span className="text-xs text-stone-400 bg-stone-200 px-2 py-0.5 rounded-full">cancellato</span>}
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${s.subscribed ? 'bg-green-500' : 'bg-stone-300'}`} />
+                  <span className="text-stone-700 font-medium text-sm truncate">{s.email}</span>
+                  {!s.subscribed && <span className="text-xs text-stone-400 bg-stone-200 px-2 py-0.5 rounded-full shrink-0">cancellato</span>}
                 </div>
                 <button
                   onClick={() => handleDelete(s.id)}
-                  className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0 ml-2"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

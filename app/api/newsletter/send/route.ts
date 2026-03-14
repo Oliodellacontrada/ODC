@@ -4,10 +4,6 @@ import { createServerClient } from '@/lib/supabase-server'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-type Subscriber = {
-  email: string
-}
-
 export async function POST(req: NextRequest) {
   const supabase = createServerClient()
   const { data: { session } } = await supabase.auth.getSession()
@@ -15,19 +11,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
 
-  const { subject, content } = await req.json()
+  const { subject, content, emails: passedEmails } = await req.json()
+
   if (!subject || !content) {
     return NextResponse.json({ error: 'Oggetto e contenuto sono obbligatori' }, { status: 400 })
   }
 
-  const { data: subscribers } = await supabase
-    .from('newsletter_subscribers')
-    .select('email')
-    .eq('subscribed', true)
+  const emails: string[] = passedEmails && passedEmails.length > 0 ? passedEmails : []
 
-  const emails = ((subscribers || []) as Subscriber[]).map((s) => s.email)
   if (emails.length === 0) {
-    return NextResponse.json({ error: 'Nessun iscritto trovato' }, { status: 400 })
+    return NextResponse.json({ error: 'Nessun iscritto selezionato' }, { status: 400 })
   }
 
   const html = `

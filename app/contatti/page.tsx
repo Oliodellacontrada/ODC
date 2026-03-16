@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin, Leaf, HelpCircle, Heart, MessageCircle } from 'lucide-react'
+import { Mail, Phone, MapPin, Leaf, HelpCircle, Heart, MessageCircle, Download } from 'lucide-react'
 
 export default function ContattiPage() {
   return (
@@ -101,6 +101,31 @@ export default function ContattiPage() {
                   <p className="text-stone-600 text-sm mt-1">{a}</p>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Bigliettino da visita */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border-2 border-olive-200 p-8">
+            <div className="flex items-center gap-2 mb-6">
+              <Download className="w-5 h-5 text-olive-600" />
+              <h3 className="text-xl font-bold text-olive-800">Biglietto da Visita</h3>
+            </div>
+            <div className="flex flex-col items-center gap-6">
+              <img
+                src="https://res.cloudinary.com/dg1x0q7te/image/upload/v1773663891/card_andrea_longo_gxtvdy.png"
+                alt="Biglietto da visita Andrea Longo - Olio della Contrada"
+                className="w-72 rounded-2xl shadow-lg"
+              />
+              <a
+                href="https://res.cloudinary.com/dg1x0q7te/image/upload/v1773663891/card_andrea_longo_gxtvdy.png"
+                download="biglietto-andrea-longo.png"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-olive-600 to-olive-700 text-white font-semibold rounded-xl hover:from-olive-700 hover:to-olive-800 transition-all shadow-lg"
+              >
+                <Download className="w-5 h-5" />
+                Scarica il biglietto
+              </a>
             </div>
           </div>
 

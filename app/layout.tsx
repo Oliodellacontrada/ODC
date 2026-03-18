@@ -7,7 +7,6 @@ import { createServerClient } from '@/lib/supabase-server'
 import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
-
 const siteUrl = 'https://www.oliodellacontrada.it'
 const ogImage = 'https://res.cloudinary.com/dg1x0q7te/image/upload/v1773327006/0MGrsFMZTQSL17ohWQpJ3w-removebg-preview_hygpgc.png'
 
@@ -22,6 +21,10 @@ export const metadata: Metadata = {
   authors: [{ name: 'Olio della Contrada' }],
   creator: 'Olio della Contrada',
   publisher: 'Olio della Contrada',
+  icons: {
+    icon: '/icon.png',
+    apple: '/icon.png',
+  },
   robots: {
     index: true,
     follow: true,

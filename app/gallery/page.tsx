@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Heart } from 'lucide-react'
 
 type GalleryItem = {
   id: string
@@ -11,6 +11,7 @@ type GalleryItem = {
   title: string | null
   created_at: string
   position: number
+  likes: number
 }
 
 function getVideoEmbedUrl(url: string): string {
@@ -44,6 +45,7 @@ export default function GalleryPage() {
   const supabase = createClient()
   const [items, setItems] = useState<GalleryItem[]>([])
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [liked, setLiked] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     async function load() {
@@ -54,7 +56,28 @@ export default function GalleryPage() {
       setItems((data as GalleryItem[]) || [])
     }
     load()
+    // Carica liked da localStorage
+    const stored = localStorage.getItem('gallery_liked')
+    if (stored) setLiked(new Set(JSON.parse(stored)))
   }, [])
+
+  async function handleLike(e: React.MouseEvent, id: string) {
+    e.stopPropagation()
+    if (liked.has(id)) return
+
+    const res = await fetch('/api/gallery/like', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    if (res.ok) {
+      const { likes } = await res.json()
+      setItems(prev => prev.map(item => item.id === id ? { ...item, likes } : item))
+      const newLiked = new Set(liked).add(id)
+      setLiked(newLiked)
+      localStorage.setItem('gallery_liked', JSON.stringify([...newLiked]))
+    }
+  }
 
   const photos = items.filter((i) => i.type === 'photo')
   const videos = items.filter((i) => i.type === 'video')
@@ -94,6 +117,7 @@ export default function GalleryPage() {
         </p>
       </div>
 
+      {/* Foto */}
       <section className="mb-16">
         <h2 className="text-2xl font-bold text-olive-700 mb-6 flex items-center gap-2">
           <span>📷</span> Foto
@@ -127,12 +151,25 @@ export default function GalleryPage() {
                     <p className="text-white text-sm font-medium">{photo.title}</p>
                   </div>
                 )}
+                {/* Like button */}
+                <button
+                  onClick={(e) => handleLike(e, photo.id)}
+                  className={`absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold shadow transition-all ${
+                    liked.has(photo.id)
+                      ? 'bg-red-500 text-white'
+                      : 'bg-white/90 text-stone-600 hover:bg-red-50 hover:text-red-500'
+                  }`}
+                >
+                  <Heart className={`w-3.5 h-3.5 ${liked.has(photo.id) ? 'fill-white' : ''}`} />
+                  {photo.likes > 0 && <span>{photo.likes}</span>}
+                </button>
               </div>
             ))}
           </div>
         )}
       </section>
 
+      {/* Video */}
       <section>
         <h2 className="text-2xl font-bold text-olive-700 mb-6 flex items-center gap-2">
           <span>🎬</span> Video
@@ -142,7 +179,7 @@ export default function GalleryPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {videos.map((video) => (
-              <div key={video.id} className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow bg-white">
+              <div key={video.id} className="relative rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow bg-white">
                 <div className="aspect-video">
                   <iframe
                     src={getVideoEmbedUrl(video.url)}
@@ -154,12 +191,28 @@ export default function GalleryPage() {
                   />
                 </div>
                 <div className="p-3 flex items-center justify-between">
-                  {video.title && (
-                    <p className="text-stone-700 font-medium">{video.title}</p>
-                  )}
-                  <span className="text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded-full ml-auto">
-                    {getVideoProvider(video.url)}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    {video.title && (
+                      <p className="text-stone-700 font-medium">{video.title}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 ml-auto">
+                    {/* Like button video */}
+                    <button
+                      onClick={(e) => handleLike(e, video.id)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold transition-all ${
+                        liked.has(video.id)
+                          ? 'bg-red-500 text-white'
+                          : 'bg-stone-100 text-stone-500 hover:bg-red-50 hover:text-red-500'
+                      }`}
+                    >
+                      <Heart className={`w-3.5 h-3.5 ${liked.has(video.id) ? 'fill-white' : ''}`} />
+                      {video.likes > 0 && <span>{video.likes}</span>}
+                    </button>
+                    <span className="text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded-full">
+                      {getVideoProvider(video.url)}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -167,6 +220,7 @@ export default function GalleryPage() {
         )}
       </section>
 
+      {/* Lightbox */}
       {lightboxIndex !== null && photos[lightboxIndex] && (
         <div
           className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
@@ -186,9 +240,22 @@ export default function GalleryPage() {
               alt={photos[lightboxIndex].title || ''}
               className="max-h-[80vh] max-w-full object-contain rounded-lg shadow-2xl"
             />
-            {photos[lightboxIndex].title && (
-              <p className="text-white text-sm font-medium">{photos[lightboxIndex].title}</p>
-            )}
+            <div className="flex items-center gap-4">
+              {photos[lightboxIndex].title && (
+                <p className="text-white text-sm font-medium">{photos[lightboxIndex].title}</p>
+              )}
+              <button
+                onClick={(e) => handleLike(e, photos[lightboxIndex].id)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                  liked.has(photos[lightboxIndex].id)
+                    ? 'bg-red-500 text-white'
+                    : 'bg-white/20 text-white hover:bg-red-500'
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${liked.has(photos[lightboxIndex].id) ? 'fill-white' : ''}`} />
+                {photos[lightboxIndex].likes > 0 && <span>{photos[lightboxIndex].likes}</span>}
+              </button>
+            </div>
             <p className="text-white/50 text-xs">{lightboxIndex + 1} / {photos.length}</p>
           </div>
           {photos.length > 1 && (

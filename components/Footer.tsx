@@ -8,6 +8,7 @@ export default function Footer() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [accepted, setAccepted] = useState(false)
 
   async function handleSubscribe(e: React.FormEvent) {
     e.preventDefault()
@@ -23,6 +24,7 @@ export default function Footer() {
       if (res.ok) {
         setMessage('Grazie per esserti iscritto!')
         setEmail('')
+        setAccepted(false)
       } else {
         setMessage(data.error || 'Errore iscrizione')
       }
@@ -96,11 +98,32 @@ export default function Footer() {
               />
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !accepted}
                 className="w-full px-6 py-3 bg-honey-500 text-olive-900 font-bold rounded-lg hover:bg-honey-400 transition-all transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-lg"
               >
                 {loading ? 'Invio...' : 'Iscriviti ora'}
               </button>
+              <p className="text-olive-200 text-xs text-center">
+                * Per te il 5% di sconto su ogni acquisto
+              </p>
+              <label className="flex items-start gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={accepted}
+                  onChange={(e) => setAccepted(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-olive-400 accent-honey-500 cursor-pointer flex-shrink-0"
+                />
+                <span className="text-olive-200 text-xs leading-relaxed group-hover:text-white transition-colors">
+                  Ho letto e accetto la{' '}
+                  <Link href="/page/privacy" className="underline hover:text-honey-300 transition-colors">
+                    Privacy Policy
+                  </Link>{' '}
+                  e la{' '}
+                  <Link href="/page/cookie" className="underline hover:text-honey-300 transition-colors">
+                    Cookie Policy
+                  </Link>
+                </span>
+              </label>
             </form>
             {message && (
               <div className="mt-4 p-3 bg-white/20 backdrop-blur-sm rounded-lg text-sm font-medium">

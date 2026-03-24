@@ -7,6 +7,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export async function POST(req: NextRequest) {
   const supabase = createServerClient()
   const { data: { session } } = await supabase.auth.getSession()
+
   if (!session) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
@@ -22,6 +23,13 @@ export async function POST(req: NextRequest) {
   if (emails.length === 0) {
     return NextResponse.json({ error: 'Nessun iscritto selezionato' }, { status: 400 })
   }
+
+  // Converte i newline in paragrafi HTML mantenendo la formattazione del testo incollato
+  const formattedContent = content
+    .split('\n\n')
+    .filter((p: string) => p.trim())
+    .map((p: string) => `<p style="margin:0 0 16px;">${p.trim().replace(/\n/g, '<br/>')}</p>`)
+    .join('')
 
   const html = `
     <!DOCTYPE html>
@@ -40,7 +48,7 @@ export async function POST(req: NextRequest) {
         </div>
         <div style="padding:40px 32px;">
           <h2 style="color:#4a5236;font-size:22px;margin:0 0 24px;">${subject}</h2>
-          <div style="color:#555;font-size:16px;line-height:1.8;">${content}</div>
+          <div style="color:#555;font-size:16px;line-height:1.8;">${formattedContent}</div>
         </div>
         <div style="background:#f7f8f3;padding:24px 32px;text-align:center;border-top:2px solid #dce2cd;">
           <p style="color:#8d9f67;font-size:13px;margin:0 0 8px;">

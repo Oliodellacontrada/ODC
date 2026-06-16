@@ -41,7 +41,7 @@ export default function Navbar() {
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/chi-siamo', label: 'Chi Siamo' },
-    { href: '/', label: 'Blog' },
+    { href: '/blog', label: 'Blog' },
     { href: '/gallery', label: 'Gallery' },
     { href: '/contatti', label: 'Contatti' },
   ]

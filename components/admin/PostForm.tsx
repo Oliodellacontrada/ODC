@@ -27,6 +27,7 @@ type Post = {
   youtube_url?: string | null
   author_name?: string | null
   show_date?: boolean
+  published_at?: string | null
 }
 
 type Props = {
@@ -45,6 +46,11 @@ function getYoutubeThumbnail(url: string): string | null {
   return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : null
 }
 
+function toDateInputValue(isoString: string | null | undefined): string {
+  if (!isoString) return ''
+  return isoString.slice(0, 10) // "YYYY-MM-DD"
+}
+
 export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
   const [type, setType] = useState(post?.type || 'articolo')
   const [title, setTitle] = useState(post?.title || '')
@@ -56,6 +62,7 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
   const [authorName, setAuthorName] = useState(post?.author_name || '')
   const [showDate, setShowDate] = useState(post?.show_date !== false)
   const [status, setStatus] = useState(post?.status || 'draft')
+  const [publishedAt, setPublishedAt] = useState(toDateInputValue(post?.published_at))
   const [metaTitle, setMetaTitle] = useState(post?.meta_title || '')
   const [metaDesc, setMetaDesc] = useState(post?.meta_description || '')
   const [selectedTags, setSelectedTags] = useState<string[]>(selectedTagIds)
@@ -81,6 +88,16 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
     )
   }
 
+  function resolvePublishedAt(): string | null {
+    if (status !== 'published') return null
+    // Se l'utente ha scelto una data, usa quella
+    if (publishedAt) return new Date(publishedAt).toISOString()
+    // Post esistente già pubblicato senza data modificata: mantieni l'originale
+    if (post?.published_at) return post.published_at
+    // Nuovo post pubblicato senza data scelta: usa adesso
+    return new Date().toISOString()
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -102,7 +119,7 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
         meta_title: metaTitle || title,
         meta_description: metaDesc || excerpt,
         author_id: user?.id,
-        published_at: status === 'published' ? new Date().toISOString() : null,
+        published_at: resolvePublishedAt(),
       }
 
       let postId = post?.id
@@ -265,12 +282,27 @@ export default function PostForm({ post, tags, selectedTagIds = [] }: Props) {
       </div>
 
       {/* Footer form */}
-      <div className="flex justify-between items-center">
-        <select value={status} onChange={(e) => setStatus(e.target.value)}
-          className="px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500">
-          <option value="draft">Bozza</option>
-          <option value="published">Pubblicato</option>
-        </select>
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <select value={status} onChange={(e) => setStatus(e.target.value)}
+            className="px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500">
+            <option value="draft">Bozza</option>
+            <option value="published">Pubblicato</option>
+          </select>
+
+          {status === 'published' && (
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-stone-700 whitespace-nowrap">Data pubblicazione:</label>
+              <input
+                type="date"
+                value={publishedAt}
+                onChange={(e) => setPublishedAt(e.target.value)}
+                className="px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-olive-500 text-sm"
+              />
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-4">
           <button type="button" onClick={() => router.back()}
             className="px-6 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors">

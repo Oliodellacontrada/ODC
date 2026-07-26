@@ -42,6 +42,7 @@ export default function Navbar() {
     { href: '/', label: 'Home' },
     { href: '/chi-siamo', label: 'Chi Siamo' },
     { href: '/blog', label: 'Blog' },
+    { href: '/video', label: 'Video' },
     { href: '/gallery', label: 'Gallery' },
     { href: '/contatti', label: 'Contatti' },
   ]
